@@ -18,7 +18,7 @@ Aquí presento los proyectos que he desarrollado:
 * **Descripción:** Elévate en un cohete mejorando al paso y aprende matemáticas mientras juegas[cite: 1].
 * **Género:** arcade,aprendizaje[cite: 1].
 * **Motor o tecnología:** HTML5, CSS y JavaScript[cite: 1].
-* **Enlaces:** [📁 Ver código fuente](./juego-1) | [🎮 Jugar en el navegador](https://jrjaskryt.github.io/JRJASKRYT/juego-1/elevador-lunar.html)[cite: 1].
+* **Enlaces:** [📁 Ver código fuente](./juego-1/code) | [🎮 Jugar en el navegador](https://jrjaskryt.github.io/JRJASKRYT/juego-1/elevador-lunar.html)[cite: 1].
 
 ---
 
