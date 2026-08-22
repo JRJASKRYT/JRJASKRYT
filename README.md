@@ -13,11 +13,10 @@
 Aquí presento los proyectos que he desarrollado:
 
 ### 1. [elevador lunar]
-*(Para la imagen del juego, puedes subir una captura a GitHub igual que hiciste con el banner y poner el nombre aquí)*
 ![Captura del juego 1](captura-juego1.jpg)
 
-* **Descripción:** [Explica brevemente de qué trata y cuál es el objetivo][cite: 1].
-* **Género:** [Ejemplo: Arcade, Puzzle, Platformer][cite: 1].
+* **Descripción:** Elévate en un cohete mejorando al paso y aprende matemáticas mientras juegas[cite: 1].
+* **Género:** arcade,aprendizaje[cite: 1].
 * **Motor o tecnología:** HTML5, CSS y JavaScript[cite: 1].
 * **Enlaces:** [📁 Ver código fuente](./juego-1) | [🎮 Jugar en el navegador](https://jrjaskryt.github.io/JRJASKRYT/juego-1/elevador-lunar.html)[cite: 1].
 
