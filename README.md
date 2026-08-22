@@ -1,30 +1,35 @@
-# ¡Hola! 👋 Soy BLOMY
+# 🎮 Mi Portafolio de Desarrollo de Videojuegos
 
-Desarrollador/a  Web, Mobile y GameDev basado/a en La Paz.
 ![Mi Banner Principal](banner.jpg)
----
 
-## 🛠️ Tecnologías y Herramientas
-- **Lenguajes:** JavaScript, Python, C#
-- **Frontend / UI:** HTML5, CSS3, React
-- **Herramientas:** Git, GitHub, VS Code
-
----
-
-## 🚀 Proyectos Destacados
-
-### 1. 🎮 [Nombre del Proyecto 1](https://github.com/tu-usuario/proyecto1)
-- **Descripción:** Breve explicación de qué hace este proyecto.
-- **Tecnologías:** React, Node.js, Tailwind.
-- 🔗 [Ver Demo en vivo](https://link-a-tu-demo.com)
-
-### 2. 📦 [Nombre del Proyecto 2](https://github.com/tu-usuario/proyecto2)
-- **Descripción:** Breve explicación de qué hace este proyecto.
-- **Tecnologías:** Python, Flask.
-- 🔗 [Ver Demo en vivo](https://link-a-tu-demo.com)
+## 👤 Presentación
+¡Hola! Soy **BLOMY**. 
+* **Mis intereses:** Me apasiona el arte en los videojuegos y descubrir nuevas mecánicas[cite: 1].
+* **Sobre mí:** Soy un estudiante de cuarto semestre de Ingeniería en sistemas me gustan juegos como FNAF , the division, tunic,stadew valey y un repertorio por su arte en el destacar con mecánicas nuevas y totalmente inversivas.  [cite: 1].
 
 ---
 
-## 📫 Contacto
-- **LinkedIn:** [linkedin.com/in/tu-usuario](https://linkedin.com/in/tu-usuario)
-- **Email:** tu-correo@email.com
+## 🕹️ Galería de Videojuegos
+Aquí presento los proyectos que he desarrollado:
+
+### 1. [elevador lunar]
+*(Para la imagen del juego, puedes subir una captura a GitHub igual que hiciste con el banner y poner el nombre aquí)*
+![Captura del juego 1](captura-juego1.jpg)
+
+* **Descripción:** [Explica brevemente de qué trata y cuál es el objetivo][cite: 1].
+* **Género:** [Ejemplo: Arcade, Puzzle, Platformer][cite: 1].
+* **Motor o tecnología:** HTML5, CSS y JavaScript[cite: 1].
+* **Enlaces:** [📁 Ver código fuente](./proyecto-1) | [🎮 Jugar en el navegador](https://JRJASKRYT.github.io/TU-REPOSITORIO/proyecto-1/index.html)[cite: 1].
+
+---
+
+### 2. [Nombre de tu segundo juego HTML]
+![Captura del juego 2](captura-juego2.jpg)
+
+* **Descripción:** [Explica brevemente de qué trata y cuál es el objetivo][cite: 1].
+* **Género:** [Ejemplo: Arcade, Puzzle, Platformer][cite: 1].
+* **Motor o tecnología:** HTML5, CSS y JavaScript[cite: 1].
+* **Enlaces:** [📁 Ver código fuente](./proyecto-2) | [🎮 Jugar en el navegador](https://JRJASKRYT.github.io/TU-REPOSITORIO/proyecto-2/index.html)[cite: 1].
+
+---
+*(Nota: Repite esta misma estructura para tus 5 proyectos HTML)*
