@@ -28,7 +28,7 @@ Aquí presento los proyectos que he desarrollado:
 * **Descripción:** [Explica brevemente de qué trata y cuál es el objetivo][cite: 1].
 * **Género:** [Ejemplo: Arcade, Puzzle, Platformer][cite: 1].
 * **Motor o tecnología:** HTML5, CSS y JavaScript[cite: 1].
-* **Enlaces:** [📁 Ver código fuente](./juego-2) | [🎮 Jugar en el navegador](https://JRJASKRYT.github.io/JRJASKRYT/blob/main/juego-2/plato-balanceado.html)[cite: 1].
+* **Enlaces:** [📁 Ver código fuente](./juego-2) | [🎮 Jugar en el navegador](https://JRJASKRYT.github.io/JRJASKRYT/juego-2/plato-balanceado.html)[cite: 1].
 
 
 ### 3. [PLato Balanceado]
@@ -37,7 +37,7 @@ Aquí presento los proyectos que he desarrollado:
 * **Descripción:** [Explica brevemente de qué trata y cuál es el objetivo][cite: 1].
 * **Género:** [Ejemplo: Arcade, Puzzle, Platformer][cite: 1].
 * **Motor o tecnología:** HTML5, CSS y JavaScript[cite: 1].
-* **Enlaces:** [📁 Ver código fuente](./juego-2) | [🎮 Jugar en el navegador](https://JRJASKRYT.github.io/JRJASKRYT/blob/main/juego-3/EcoRush.html)[cite: 1].
+* **Enlaces:** [📁 Ver código fuente](./juego-2) | [🎮 Jugar en el navegador](https://JRJASKRYT.github.io/JRJASKRYT/juego-3/EcoRush.html)[cite: 1].
 
 
 ### 4. [PLato Balanceado]
@@ -46,7 +46,7 @@ Aquí presento los proyectos que he desarrollado:
 * **Descripción:** [Explica brevemente de qué trata y cuál es el objetivo][cite: 1].
 * **Género:** [Ejemplo: Arcade, Puzzle, Platformer][cite: 1].
 * **Motor o tecnología:** HTML5, CSS y JavaScript[cite: 1].
-* **Enlaces:** [📁 Ver código fuente](./juego-2) | [🎮 Jugar en el navegador](https://JRJASKRYT.github.io/JRJASKRYT/blob/main/juego-4/Hydrorush.html)[cite: 1].
+* **Enlaces:** [📁 Ver código fuente](./juego-2) | [🎮 Jugar en el navegador](https://JRJASKRYT.github.io/JRJASKRYT/juego-4/Hydrorush.html)[cite: 1].
 
 
 ### 5. [PLato Balanceado]
@@ -55,5 +55,5 @@ Aquí presento los proyectos que he desarrollado:
 * **Descripción:** [Explica brevemente de qué trata y cuál es el objetivo][cite: 1].
 * **Género:** [Ejemplo: Arcade, Puzzle, Platformer][cite: 1].
 * **Motor o tecnología:** HTML5, CSS y JavaScript[cite: 1].
-* **Enlaces:** [📁 Ver código fuente](./juego-2) | [🎮 Jugar en el navegador](https://JRJASKRYT.github.io/JRJASKRYT/blob/main/juego-5/Financy.html)[cite: 1].
+* **Enlaces:** [📁 Ver código fuente](./juego-2) | [🎮 Jugar en el navegador](https://JRJASKRYT.github.io/JRJASKRYT/juego-5/Financy.html)[cite: 1].
 
