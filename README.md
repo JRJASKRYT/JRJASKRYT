@@ -1,7 +1,7 @@
 # ¡Hola! 👋 Soy BLOMY
 
 Desarrollador/a  Web, Mobile y GameDev basado/a en La Paz.
-
+![Mi Banner Principal](banner.jpg)
 ---
 
 ## 🛠️ Tecnologías y Herramientas
