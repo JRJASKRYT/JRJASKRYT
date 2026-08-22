@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriDash: Super Escuela (Edición Alto Contraste)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #0f101d;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            width: 480px;
+            height: 680px;
+            background: #1b263b;
+            border-radius: 20px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.8);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 4px solid #a3ff12;
+        }
+
+        /* HUD */
+        #hud {
+            height: 65px;
+            background: #0d1117;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 16px;
+            z-index: 10;
+            border-bottom: 2px solid #a3ff12;
+        }
+
+        .hud-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hud-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #8b949e;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .hud-value {
+            font-size: 20px;
+            font-weight: 800;
+            color: #ffeb3b;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .energy-bar-container {
+            width: 110px;
+            height: 16px;
+            background: #21262d;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #ffffff;
+            margin-top: 2px;
+        }
+
+        #energy-bar {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #e63946, #ffb703, #52b788);
+            transition: width 0.25s ease-out;
+        }
+
+        /* Canvas Game Area */
+        #canvas-wrapper {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background-color: #2c3e50; /* Pista Clara para evitar opacidad */
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            /* Filtro global para asegurar brillo y contraste */
+            filter: brightness(1.15) contrast(1.2);
+        }
+
+        /* Controls Area */
+        #controls {
+            height: 85px;
+            background: #0d1117;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 10;
+            border-top: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-ctrl {
+            width: 140px;
+            height: 56px;
+            background: linear-gradient(180deg, #27ae60 0%, #1e8449 100%);
+            border: 2px solid #2ecc71;
+            border-radius: 16px;
+            color: white;
+            font-size: 22px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #145a32, 0 8px 15px rgba(0,0,0,0.4);
+            transition: transform 0.08s, box-shadow 0.08s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-ctrl:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #145a32;
+        }
+
+        /* Screen Hit Effect */
+        .blur-effect {
+            filter: brightness(0.6) contrast(1.5);
+            transition: filter 0.1s;
+        }
+
+        /* Overlay Screens */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(13, 17, 23, 0.95);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            text-align: center;
+            box-sizing: border-box;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .title {
+            font-size: 36px;
+            font-weight: 900;
+            color: #ffeb3b;
+            text-shadow: 0 4px 12px rgba(255, 235, 59, 0.3), 0 2px 4px #000;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #2ecc71;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .btn-main {
+            padding: 16px 36px;
+            font-size: 20px;
+            font-weight: 800;
+            color: white;
+            background: linear-gradient(180deg, #ff9e00, #e85d04);
+            border: 2px solid #ffb703;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #9d0208, 0 8px 20px rgba(232, 93, 4, 0.4);
+            transition: transform 0.1s;
+            margin-top: 16px;
+        }
+
+        .btn-main:hover {
+            transform: translateY(-2px) scale(1.03);
+        }
+
+        .btn-main:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #9d0208;
+        }
+
+        /* Quiz Cards */
+        .quiz-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 14px 18px;
+            width: 100%;
+            margin: 8px 0;
+            cursor: pointer;
+            border: 2px solid rgba(255,255,255,0.3);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .quiz-card:hover {
+            border-color: #ffeb3b;
+            background: rgba(255, 235, 59, 0.2);
+            transform: translateX(4px);
+        }
+
+        .quiz-card.correct {
+            background: rgba(46, 204, 113, 0.4) !important;
+            border-color: #2ecc71 !important;
+        }
+
+        .quiz-card.incorrect {
+            background: rgba(231, 76, 60, 0.4) !important;
+            border-color: #e74c3c !important;
+        }
+
+        .quiz-icon {
+            font-size: 32px;
+        }
+
+        .quiz-text {
+            font-size: 15px;
+            text-align: left;
+            color: #fff;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .feedback-popup {
+            margin-top: 14px;
+            padding: 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            font-size: 14px;
+            color: #ffda6a;
+            font-weight: 600;
+            min-height: 44px;
+        }
+
+        .instructions {
+            background: rgba(255,255,255,0.08);
+            padding: 18px;
+            border-radius: 14px;
+            font-size: 13.5px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+            text-align: left;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 11px;
+        }
+        .tag-green { background: #27ae60; color: #ffffff; }
+        .tag-red { background: #c0392b; color: #ffffff; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- HUD -->
+    <div id="hud">
+        <div class="hud-item">
+            <span class="hud-label">Nivel</span>
+            <span class="hud-value" id="hud-level">1/3</span>
+        </div>
+        <div class="hud-item">
+            <span class="hud-label">Puntos</span>
+            <span class="hud-value" id="hud-score">0</span>
+        </div>
+        <div class="hud-item">
+            <span class="hud-label">Tiempo</span>
+            <span class="hud-value" id="hud-timer">60s</span>
+        </div>
+        <div class="hud-item">
+            <span class="hud-label">Energía</span>
+            <div class="energy-bar-container">
+                <div id="energy-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CANVAS GAME AREA -->
+    <div id="canvas-wrapper">
+        <canvas id="gameCanvas" width="480" height="530"></canvas>
+    </div>
+
+    <!-- CONTROLS -->
+    <div id="controls">
+        <button class="btn-ctrl" id="btn-left">◄ IZQ</button>
+        <button class="btn-ctrl" id="btn-right">DER ►</button>
+    </div>
+
+    <!-- START OVERLAY -->
+    <div id="screen-start" class="overlay">
+        <div class="title">NutriDash</div>
+        <div class="subtitle">✨ Edición Super Escuela ✨</div>
+        <div class="instructions">
+            🏃‍♂️ <strong>¡Vista Cenital!</strong> Muévete entre carriles sin perder detalle.<br><br>
+            🍎 <span class="tag tag-green">+10 Pts</span> Comida sana para recargar energía.<br>
+            🍔 <span class="tag tag-red">-15% Energía</span> Comida chatarra frena tu paso.<br>
+            🧠 <strong>Nutri-Quiz:</strong> ¡Responde en el recreo para ganar +50 pts!<br><br>
+            🎯 <strong>Meta:</strong> Completa los 3 niveles con 500 puntos.
+        </div>
+        <button class="btn-main" onclick="startGame()">¡EMPEZAR A JUGAR!</button>
+    </div>
+
+    <!-- QUIZ OVERLAY -->
+    <div id="screen-quiz" class="overlay hidden">
+        <div class="subtitle" style="margin-bottom: 6px; color: #ffeb3b; font-size: 18px;">🍎 ¡RECREO NUTRICIONAL! 🥦</div>
+        <div id="quiz-question" style="font-size: 16px; font-weight: bold; margin-bottom: 14px; color: #fff;"></div>
+        
+        <div id="quiz-options" style="width: 100%;"></div>
+
+        <div id="quiz-feedback" class="feedback-popup"></div>
+
+        <button id="btn-quiz-next" class="btn-main hidden" onclick="nextLevelFromQuiz()">Continuar al Nivel ►</button>
+    </div>
+
+    <!-- GAME OVER OVERLAY -->
+    <div id="screen-gameover" class="overlay hidden">
+        <div class="title" style="color: #ff4d6d;">¡Juego Terminado!</div>
+        <p id="gameover-reason" style="margin: 16px 0; font-size: 15px; color: #e0e0e0;"></p>
+        <div style="font-size: 26px; font-weight: bold; color: #ffeb3b; margin-bottom: 20px;" id="gameover-score">Puntaje: 0</div>
+        <button class="btn-main" onclick="resetGame()">Intentar de Nuevo 🔄</button>
+    </div>
+
+    <!-- VICTORY OVERLAY -->
+    <div id="screen-victory" class="overlay hidden">
+        <div class="title" style="color: #2ecc71;">🏆 ¡VICTORIA! 🏆</div>
+        <div class="subtitle">¡Eres un Súper Nutri-Campeón!</div>
+        <p style="margin: 10px 0; font-size: 15px;">¡Has conquistado los 3 niveles y dominas la buena alimentación!</p>
+        <div style="font-size: 34px; font-weight: bold; color: #ffeb3b; margin: 16px 0;" id="victory-score">500 Pts</div>
+        <button class="btn-main" onclick="resetGame()">Jugar Otra Vez 🎮</button>
+    </div>
+</div>
+
+<script>
+    // Audio FX
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new AudioCtx();
+    }
+
+    function playSound(type) {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'pop') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(450, now);
+            osc.frequency.exponentialRampToValueAtTime(900, now + 0.12);
+            gain.gain.setValueAtTime(0.35, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+            osc.start(now);
+            osc.stop(now + 0.12);
+        } else if (type === 'hit') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(160, now);
+            osc.frequency.linearRampToValueAtTime(50, now + 0.25);
+            gain.gain.setValueAtTime(0.4, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+            osc.start(now);
+            osc.stop(now + 0.25);
+        } else if (type === 'win') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(350, now);
+            osc.frequency.setValueAtTime(480, now + 0.1);
+            osc.frequency.setValueAtTime(650, now + 0.22);
+            gain.gain.setValueAtTime(0.35, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        }
+    }
+
+    // Canvas setup
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const LANES = [80, 240, 400];
+    let currentLane = 1;
+    let targetX = LANES[1];
+    let playerX = LANES[1];
+
+    // Particle System
+    let particles = [];
+
+    function addParticles(x, y, color) {
+        for (let i = 0; i < 8; i++) {
+            particles.push({
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 6,
+                vy: (Math.random() - 0.5) * 6,
+                radius: Math.random() * 4 + 2,
+                color: color,
+                alpha: 1,
+                life: 20
+            });
+        }
+    }
+
+    function updateParticles() {
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.alpha -= 0.05;
+            p.life--;
+
+            if (p.life <= 0 || p.alpha <= 0) {
+                particles.splice(i, 1);
+            } else {
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+    }
+
+    // Floating Text
+    let floatingTexts = [];
+
+    function addFloatingText(text, x, y, color) {
+        floatingTexts.push({ text, x, y, color, alpha: 1, life: 30 });
+    }
+
+    function updateFloatingTexts() {
+        for (let i = floatingTexts.length - 1; i >= 0; i--) {
+            let ft = floatingTexts[i];
+            ft.y -= 1.5;
+            ft.alpha -= 0.03;
+            ft.life--;
+
+            if (ft.life <= 0) {
+                floatingTexts.splice(i, 1);
+            } else {
+                ctx.save();
+                ctx.globalAlpha = ft.alpha;
+                ctx.font = 'bold 22px Arial';
+                ctx.fillStyle = ft.color;
+                ctx.textAlign = 'center';
+                ctx.shadowColor = 'black';
+                ctx.shadowBlur = 6;
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.restore();
+            }
+        }
+    }
+
+    // Level Configs
+    const LEVEL_CONFIGS = {
+        1: { speed: 2.8, spawnInterval: 60, junkRatio: 0.25, time: 60 },
+        2: { speed: 4.2, spawnInterval: 45, junkRatio: 0.38, time: 55 },
+        3: { speed: 5.8, spawnInterval: 30, junkRatio: 0.52, time: 50 }
+    };
+
+    let gameState = {
+        active: false,
+        level: 1,
+        score: 0,
+        energy: 100,
+        time: 60,
+        items: [],
+        spawnTimer: 0,
+        combo: 0,
+        shield: false,
+        roadOffset: 0
+    };
+
+    let timerInterval;
+
+    const ITEM_TYPES = [
+        { name: 'Manzana', icon: '🍎', type: 'healthy', pts: 10, energy: 6, color: '#ff4d6d' },
+        { name: 'Plátano', icon: '🍌', type: 'healthy', pts: 10, energy: 6, color: '#ffeb3b' },
+        { name: 'Brócoli', icon: '🥦', type: 'healthy', pts: 15, energy: 10, color: '#2ecc71' },
+        { name: 'Agua', icon: '💧', type: 'healthy', pts: 12, energy: 12, color: '#00b4d8' },
+        { name: 'Zanahoria', icon: '🥕', type: 'healthy', pts: 10, energy: 6, color: '#ff7b00' },
+        { name: 'Hamburguesa', icon: '🍔', type: 'junk', pts: 0, energy: -15, color: '#ff1744' },
+        { name: 'Gaseosa', icon: '🥤', type: 'junk', pts: 0, energy: -15, color: '#ff1744' },
+        { name: 'Papas', icon: '🍟', type: 'junk', pts: 0, energy: -12, color: '#ff1744' },
+        { name: 'Dona', icon: '🍩', type: 'junk', pts: 0, energy: -15, color: '#ff1744' },
+        { name: 'Escudo', icon: '🛡️', type: 'powerup', power: 'shield', color: '#00ffff' }
+    ];
+
+    const QUIZ_DATA = [
+        {
+            level: 1,
+            question: "¿Cuál de estos alimentos le da superfuerza a tus músculos sin cansarte?",
+            options: [
+                { text: "Plátano fresco", icon: "🍌", correct: true },
+                { text: "Papas fritas", icon: "🍟", correct: false },
+                { text: "Gaseosa dulce", icon: "🥤", correct: false }
+            ],
+            explanation: "¡Eso es! Las frutas te dan potasio y energía limpia para jugar."
+        },
+        {
+            level: 2,
+            question: "¿Qué bebida es la mejor opción para quitarte la sed en el recreo?",
+            options: [
+                { text: "Jugo envasado", icon: "🧃", correct: false },
+                { text: "Agua fresca", icon: "💧", correct: true },
+                { text: "Refresco azucarado", icon: "🥤", correct: false }
+            ],
+            explanation: "¡Excelente! El agua natural hidrata tu cuerpo a la perfección."
+        }
+    ];
+
+    // Controls
+    document.getElementById('btn-left').addEventListener('click', () => movePlayer(-1));
+    document.getElementById('btn-right').addEventListener('click', () => movePlayer(1));
+
+    document.addEventListener('keydown', (e) => {
+        if (!gameState.active) return;
+        if (e.key === 'ArrowLeft') movePlayer(-1);
+        if (e.key === 'ArrowRight') movePlayer(1);
+    });
+
+    function movePlayer(dir) {
+        initAudio();
+        currentLane = Math.max(0, Math.min(2, currentLane + dir));
+        targetX = LANES[currentLane];
+    }
+
+    function startGame() {
+        initAudio();
+        document.getElementById('screen-start').classList.add('hidden');
+        resetGameValues();
+        gameState.active = true;
+        gameLoop();
+        startTimers();
+    }
+
+    function resetGameValues() {
+        gameState = {
+            active: false,
+            level: 1,
+            score: 0,
+            energy: 100,
+            time: LEVEL_CONFIGS[1].time,
+            items: [],
+            spawnTimer: 0,
+            combo: 0,
+            shield: false,
+            roadOffset: 0
+        };
+        currentLane = 1;
+        targetX = LANES[1];
+        playerX = LANES[1];
+        particles = [];
+        floatingTexts = [];
+        updateHUD();
+    }
+
+    function startTimers() {
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            if (!gameState.active) return;
+            gameState.time--;
+            updateHUD();
+
+            if (gameState.time <= 0) {
+                endLevel();
+            }
+        }, 1000);
+    }
+
+    function updateHUD() {
+        document.getElementById('hud-level').innerText = `${gameState.level}/3`;
+        document.getElementById('hud-score').innerText = gameState.score;
+        document.getElementById('hud-timer').innerText = `${gameState.time}s`;
+        const energyBar = document.getElementById('energy-bar');
+        energyBar.style.width = `${Math.max(0, gameState.energy)}%`;
+    }
+
+    function spawnItem() {
+        const cfg = LEVEL_CONFIGS[gameState.level];
+        const laneIdx = Math.floor(Math.random() * 3);
+        
+        const isJunk = Math.random() < cfg.junkRatio;
+        const isPowerup = !isJunk && Math.random() < 0.12;
+
+        let selected;
+        if (isPowerup) {
+            selected = ITEM_TYPES.find(i => i.power === 'shield');
+        } else if (isJunk) {
+            const junkList = ITEM_TYPES.filter(i => i.type === 'junk');
+            selected = junkList[Math.floor(Math.random() * junkList.length)];
+        } else {
+            const healthyList = ITEM_TYPES.filter(i => i.type === 'healthy');
+            selected = healthyList[Math.floor(Math.random() * healthyList.length)];
+        }
+
+        gameState.items.push({
+            ...selected,
+            x: LANES[laneIdx],
+            y: -40,
+            speed: cfg.speed + (Math.random() * 0.4),
+            lane: laneIdx,
+            bounce: Math.random() * Math.PI
+        });
+    }
+
+    // PISTA CON ALTO CONTRASTE (VISTA DESDE ARRIBA)
+    function drawBackground() {
+        ctx.globalAlpha = 1.0;
+        const cfg = LEVEL_CONFIGS[gameState.level];
+        gameState.roadOffset = (gameState.roadOffset + cfg.speed * 1.5) % 40;
+
+        // Fondo de la pista (Asfalto gris claro)
+        ctx.fillStyle = '#34495e';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Líneas punteadas blancas y brillantes entre carriles
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 4;
+        ctx.setLineDash([20, 20]);
+
+        for (let i = 1; i < 3; i++) {
+            ctx.beginPath();
+            ctx.lineDashOffset = -gameState.roadOffset;
+            ctx.moveTo(i * 160, 0);
+            ctx.lineTo(i * 160, canvas.height);
+            ctx.stroke();
+        }
+        ctx.setLineDash([]);
+    }
+
+    function gameLoop() {
+        if (!gameState.active) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBackground();
+
+        playerX += (targetX - playerX) * 0.22;
+
+        const cfg = LEVEL_CONFIGS[gameState.level];
+        gameState.spawnTimer++;
+        if (gameState.spawnTimer > cfg.spawnInterval) {
+            spawnItem();
+            gameState.spawnTimer = 0;
+        }
+
+        // Dibujar Objetos/Items
+        for (let i = gameState.items.length - 1; i >= 0; i--) {
+            let item = gameState.items[i];
+            item.y += item.speed;
+            item.bounce += 0.08;
+
+            const wobbleX = item.x + Math.sin(item.bounce) * 4;
+
+            ctx.save();
+            ctx.globalAlpha = 1.0;
+
+            // Fondo circular sólido detrás del emoji para darle contraste total
+            ctx.beginPath();
+            ctx.arc(wobbleX, item.y - 12, 22, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = item.color;
+            ctx.stroke();
+
+            // Emoji / Icono
+            ctx.font = '30px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(item.icon, wobbleX, item.y - 10);
+            ctx.restore();
+
+            const playerY = canvas.height - 75;
+            if (item.y > playerY - 35 && item.y < playerY + 35 && Math.abs(wobbleX - playerX) < 45) {
+                handleCollision(item, wobbleX, item.y);
+                gameState.items.splice(i, 1);
+                continue;
+            }
+
+            if (item.y > canvas.height + 40) {
+                gameState.items.splice(i, 1);
+            }
+        }
+
+        // DIBUJAR JUGADOR (VISTA CENITAL DE ALTO CONTRASTE)
+        const playerY = canvas.height - 75;
+        ctx.save();
+        ctx.globalAlpha = 1.0;
+
+        // Círculo de Borde Blanco
+        ctx.beginPath();
+        ctx.arc(playerX, playerY, 28, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+
+        // Círculo Interior Cian Neón
+        ctx.beginPath();
+        ctx.arc(playerX, playerY, 24, 0, Math.PI * 2);
+        ctx.fillStyle = '#00ffff';
+        ctx.fill();
+
+        // Icono Corredor
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🏃‍♂️', playerX, playerY);
+
+        // Escudo si está activo
+        if (gameState.shield) {
+            ctx.beginPath();
+            ctx.arc(playerX, playerY, 34, 0, Math.PI * 2);
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        if (gameState.combo >= 3) {
+            ctx.save();
+            ctx.font = 'bold 15px Arial';
+            ctx.fillStyle = '#ffeb3b';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = 'black';
+            ctx.shadowBlur = 4;
+            const multiplier = Math.floor(gameState.combo / 3) + 1;
+            ctx.fillText(`🔥 MULTIPLICADOR x${multiplier}`, playerX, playerY - 45);
+            ctx.restore();
+        }
+
+        updateParticles();
+        updateFloatingTexts();
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    function handleCollision(item, hitX, hitY) {
+        if (item.type === 'healthy') {
+            playSound('pop');
+            gameState.combo++;
+            const comboBonus = Math.floor(gameState.combo / 3) * 5;
+            const earnedPts = item.pts + comboBonus;
+
+            gameState.score += earnedPts;
+            gameState.energy = Math.min(100, gameState.energy + item.energy);
+
+            addParticles(hitX, hitY, item.color);
+            addFloatingText(`+${earnedPts}`, hitX, hitY - 20, '#2ecc71');
+
+        } else if (item.type === 'junk') {
+            if (gameState.shield) {
+                playSound('pop');
+                gameState.shield = false;
+                addParticles(hitX, hitY, '#00ffff');
+                addFloatingText('¡Protegido!', hitX, hitY - 20, '#00ffff');
+            } else {
+                playSound('hit');
+                gameState.combo = 0;
+                gameState.energy += item.energy;
+
+                addParticles(hitX, hitY, '#ff1744');
+                addFloatingText(`${item.energy}%`, hitX, hitY - 20, '#ff1744');
+
+                const container = document.getElementById('canvas-wrapper');
+                container.classList.add('blur-effect');
+                setTimeout(() => container.classList.remove('blur-effect'), 250);
+
+                if (gameState.energy <= 0) {
+                    gameOver("Te quedaste sin energía por comer demasiada comida chatarra.");
+                }
+            }
+        } else if (item.power === 'shield') {
+            playSound('win');
+            gameState.shield = true;
+            addParticles(hitX, hitY, '#00ffff');
+            addFloatingText('¡ESCUDO!', hitX, hitY - 20, '#ffeb3b');
+        }
+
+        updateHUD();
+    }
+
+    function endLevel() {
+        gameState.active = false;
+        clearInterval(timerInterval);
+
+        if (gameState.level < 3) {
+            showQuizScreen();
+        } else {
+            if (gameState.score >= 500) {
+                showVictoryScreen();
+            } else {
+                gameOver(`Nivel completado pero faltaron puntos. Obtuviste ${gameState.score} de los 500 requeridos.`);
+            }
+        }
+    }
+
+    function showQuizScreen() {
+        const quiz = QUIZ_DATA[gameState.level - 1];
+        document.getElementById('screen-quiz').classList.remove('hidden');
+        document.getElementById('quiz-question').innerText = quiz.question;
+        document.getElementById('quiz-feedback').innerText = "¡Elige con sabiduría para potenciar a tu personaje!";
+        document.getElementById('btn-quiz-next').classList.add('hidden');
+
+        const optionsContainer = document.getElementById('quiz-options');
+        optionsContainer.innerHTML = '';
+
+        quiz.options.forEach((opt) => {
+            const card = document.createElement('div');
+            card.className = 'quiz-card';
+            card.innerHTML = `
+                <div class="quiz-icon">${opt.icon}</div>
+                <div class="quiz-text">${opt.text}</div>
+            `;
+            card.onclick = () => handleQuizAnswer(opt, quiz, card);
+            optionsContainer.appendChild(card);
+        });
+    }
+
+    function handleQuizAnswer(selectedOption, quizData, cardElement) {
+        const cards = document.querySelectorAll('.quiz-card');
+        cards.forEach(c => c.onclick = null);
+
+        if (selectedOption.correct) {
+            playSound('win');
+            cardElement.classList.add('correct');
+            gameState.score += 50;
+            gameState.energy = Math.min(100, gameState.energy + 20);
+            document.getElementById('quiz-feedback').innerText = `🎉 ${quizData.explanation} (+50 Pts y +20% Energía)`;
+        } else {
+            playSound('hit');
+            cardElement.classList.add('incorrect');
+            document.getElementById('quiz-feedback').innerText = `💡 Tip Nutritivo: Las frutas y opciones frescas otorgan mejor rendimiento.`;
+        }
+
+        updateHUD();
+        document.getElementById('btn-quiz-next').classList.remove('hidden');
+    }
+
+    function nextLevelFromQuiz() {
+        document.getElementById('screen-quiz').classList.add('hidden');
+        gameState.level++;
+        const cfg = LEVEL_CONFIGS[gameState.level];
+        gameState.time = cfg.time;
+        gameState.items = [];
+        gameState.active = true;
+        gameLoop();
+        startTimers();
+    }
+
+    function gameOver(reason) {
+        gameState.active = false;
+        clearInterval(timerInterval);
+        document.getElementById('gameover-reason').innerText = reason;
+        document.getElementById('gameover-score').innerText = `Puntaje Final: ${gameState.score}`;
+        document.getElementById('screen-gameover').classList.remove('hidden');
+    }
+
+    function showVictoryScreen() {
+        playSound('win');
+        document.getElementById('victory-score').innerText = `${gameState.score} Pts`;
+        document.getElementById('screen-victory').classList.remove('hidden');
+    }
+
+    function resetGame() {
+        document.getElementById('screen-gameover').classList.add('hidden');
+        document.getElementById('screen-victory').classList.add('hidden');
+        startGame();
+    }
+</script>
+</body>
+</html>
