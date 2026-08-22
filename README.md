@@ -1,38 +1,30 @@
-# 🎮 BLOMY | Game Development Portfolio
+# ¡Hola! 👋 Soy BLOMY
 
-![Banner del Portafolio](https://via.placeholder.com/1200x400.png?text=Game+Dev+Portfolio)
-
-[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/tu-usuario)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/tu-usuario)
-
-## 👤 Presentación
-¡Hola! Soy **[Tu Nombre]**, estudiante de Desarrollo de Videojuegos. Me enfoco en [menciona un área: programación de mecánicas, diseño de niveles, arte pixel, etc.]. Este repositorio contiene la colección de prototipos y juegos desarrollados durante el curso[cite: 1].
+Desarrollador/a  Web, Mobile y GameDev basado/a en La Paz.
 
 ---
 
-## 🕹️ Galería de Proyectos
-
-### 1. 🚀 [Nombre del Juego 1]
-![GIF del juego 1](https://via.placeholder.com/600x300.png?text=Gameplay+Juego+1)
-
-* **Descripción:** [Breve explicación de qué trata el juego][cite: 1]
-* **Género:** [Ejemplo: Arcade / Plataformas][cite: 1]
-* **Motor / Tecnología:** [Ejemplo: Unity / Godot / Unreal Engine][cite: 1]
-* **Enlaces:** [📁 Código Fuente](./proyectos/juego-1) | [🎮 Jugar en Web](https://tu-link-itchio.com)[cite: 1]
+## 🛠️ Tecnologías y Herramientas
+- **Lenguajes:** JavaScript, Python, C#
+- **Frontend / UI:** HTML5, CSS3, React
+- **Herramientas:** Git, GitHub, VS Code
 
 ---
 
-### 2. 🧩 [Nombre del Juego 2]
-![GIF del juego 2](https://via.placeholder.com/600x300.png?text=Gameplay+Juego+2)
+## 🚀 Proyectos Destacados
 
-* **Descripción:** [Breve explicación de qué trata el juego][cite: 1]
-* **Género:** [Ejemplo: Puzzle / Estrategia][cite: 1]
-* **Motor / Tecnología:** [Ejemplo: Godot Engine][cite: 1]
-* **Enlaces:** [📁 Código Fuente](./proyectos/juego-2) | [🎮 Jugar en Web](https://tu-link-itchio.com)[cite: 1]
+### 1. 🎮 [Nombre del Proyecto 1](https://github.com/tu-usuario/proyecto1)
+- **Descripción:** Breve explicación de qué hace este proyecto.
+- **Tecnologías:** React, Node.js, Tailwind.
+- 🔗 [Ver Demo en vivo](https://link-a-tu-demo.com)
+
+### 2. 📦 [Nombre del Proyecto 2](https://github.com/tu-usuario/proyecto2)
+- **Descripción:** Breve explicación de qué hace este proyecto.
+- **Tecnologías:** Python, Flask.
+- 🔗 [Ver Demo en vivo](https://link-a-tu-demo.com)
 
 ---
 
-## 🛠️ Herramientas Utilizadas
-* **Engines:** Unity, Godot Engine[cite: 1]
-* **Control de Versiones:** Git, GitHub[cite: 1]
-* **Arte / Audio:** Aseprite, Blender, Audacity
+## 📫 Contacto
+- **LinkedIn:** [linkedin.com/in/tu-usuario](https://linkedin.com/in/tu-usuario)
+- **Email:** tu-correo@email.com
