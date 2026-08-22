@@ -32,7 +32,7 @@ Aquí presento los proyectos que he desarrollado:
 
 
 ### 3. [EcoRush]
-![Captura del juego 2](captura-juego2.jpg)
+![Captura del juego 2](captura-juego3.jpg)
 
 * **Descripción:** [Explica brevemente de qué trata y cuál es el objetivo][cite: 1].
 * **Género:** [Ejemplo: Arcade, Puzzle, Platformer][cite: 1].
