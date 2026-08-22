@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elevador Lunar: Misión Arcade</title>
+<style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; font-family: 'Segoe UI', sans-serif; }
+        body { background: #020617; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: #0f172a;
+            border: 2px solid #38bdf8;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+            overflow: hidden;
+        }
+ 
+        canvas { display: block; width: 100%; height: 100%; }
+ 
+        /* INTERFACES HTML SUPERPUESTAS */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(5px);
+            z-index: 10; transition: opacity 0.3s;
+        }
+        .hidden { display: none !important; }
+ 
+        h1 { font-size: 3rem; color: #38bdf8; text-shadow: 0 0 10px #38bdf8; margin-bottom: 10px; }
+        p { font-size: 1.2rem; color: #cbd5e1; margin-bottom: 20px; text-align: center; max-width: 600px; }
+        .btn {
+            background: #38bdf8; color: #0f172a; border: none; padding: 15px 30px;
+            font-size: 1.2rem; font-weight: bold; border-radius: 8px; cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .btn:hover { background: #7dd3fc; transform: scale(1.05); }
+ 
+        /* BATALLA DE JEFE */
+        #boss-ui {
+            background: rgba(15, 23, 42, 0.95);
+            border: 2px solid #ef4444;
+            box-shadow: 0 0 40px rgba(239, 68, 68, 0.4);
+        }
+        .boss-sprite { font-size: 5rem; animation: float 2s infinite ease-in-out; margin-bottom: 10px; }
+        .boss-hp { display: flex; gap: 10px; margin-bottom: 20px; }
+        .hp-dot { width: 20px; height: 20px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 10px #ef4444; }
+        .hp-dot.empty { background: #334155; box-shadow: none; }
+ 
+        .question-box { font-size: 2.5rem; font-weight: bold; margin: 20px 0; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 80%; max-width: 500px; }
+        .opt-btn {
+            background: #1e293b; color: white; border: 1px solid #38bdf8; padding: 15px;
+            font-size: 1.5rem; border-radius: 8px; cursor: pointer; transition: 0.2s;
+        }
+        .opt-btn:hover { background: #38bdf8; color: #0f172a; }
+
+        /* SELECCION DE MEJORA (CARTAS) */
+        #upgrade-ui {
+            background: rgba(15, 23, 42, 0.95);
+            border: 2px solid #eab308;
+            box-shadow: 0 0 40px rgba(234, 179, 8, 0.35);
+        }
+        .upgrade-subtitle { font-size: 1rem; color: #fbbf24; margin-bottom: 24px; text-align: center; max-width: 560px; }
+        .upgrade-row { display: flex; gap: 18px; justify-content: center; align-items: stretch; flex-wrap: wrap; }
+        .upgrade-card {
+            background: #1e293b; border: 2px solid #eab308; border-radius: 12px;
+            width: 190px; min-height: 220px; padding: 16px; display: flex; flex-direction: column;
+            align-items: center; text-align: center; gap: 8px; transition: transform 0.2s, border-color 0.2s;
+        }
+        .upgrade-card:hover { transform: translateY(-4px); }
+        .upgrade-card.failed { border-color: #475569; opacity: 0.5; }
+        .card-icon { font-size: 2.5rem; }
+        .card-title { font-size: 1.05rem; font-weight: bold; color: #eab308; }
+        .card-desc { font-size: 0.85rem; color: #cbd5e1; flex-grow: 1; }
+        .card-status { font-size: 0.85rem; color: #94a3b8; margin-top: auto; }
+        .card-question { font-size: 1.3rem; font-weight: bold; margin: 6px 0; }
+        .card-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
+        .opt-btn.small { padding: 8px; font-size: 1rem; }
+        .small-btn { padding: 10px 18px; font-size: 1rem; margin-top: auto; }
+ 
+        /* HUD JUEGO */
+        #hud { position: absolute; top: 10px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center; z-index: 5; pointer-events: none; }
+        .hud-text { font-size: 1.5rem; font-weight: bold; color: #38bdf8; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); display: flex; align-items: center; gap: 8px; }
+        .time-bar-outer {
+            width: 160px; height: 16px; background: #1e293b; border: 1px solid #38bdf8;
+            border-radius: 8px; overflow: hidden;
+        }
+        .time-bar-inner {
+            width: 0%; height: 100%; background: linear-gradient(90deg, #38bdf8, #7dd3fc);
+            transition: width 0.2s linear;
+        }
+ 
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+</style>
+</head>
+<body>
+ 
+<div id="game-container">
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+<div id="hud">
+<div class="hud-text" id="hud-lives">❤️❤️❤️</div>
+<div class="hud-text" id="hud-phase">Fase: 1/3</div>
+<div class="hud-text" id="hud-progress">
+    ⏱
+    <div class="time-bar-outer"><div class="time-bar-inner" id="hud-time-bar"></div></div>
+</div>
+</div>
+ 
+    <!-- PANTALLA DE INICIO -->
+<div id="start-screen" class="overlay">
+<h1>Misión Lunar</h1>
+<p>Muevete con <b>W A S D</b>. Dispara con <b>ESPACIO</b>.<br>Destruye bichos espaciales 👾, esquiva los asteroides ☄️ y derrota a los Jefes Matemáticos para llegar a la Luna.</p>
+<button class="btn" onclick="startGame()">Iniciar Misión 🚀</button>
+</div>
+ 
+    <!-- PANTALLA DE JEFE -->
+<div id="boss-ui" class="overlay hidden">
+<h2 style="color:#ef4444; font-size: 2rem;">¡JEFE MATEMÁTICO ENCONTRADO!</h2>
+<div class="boss-sprite" id="boss-icon">🛸</div>
+<div class="boss-hp" id="boss-hp-bar"></div>
+<div class="question-box" id="boss-question">25 + 14 = ?</div>
+<div class="options-grid" id="boss-options"></div>
+</div>
+
+    <!-- PANTALLA DE MEJORA DE NAVE (CARTAS) -->
+<div id="upgrade-ui" class="overlay hidden">
+<h2 style="color:#eab308; font-size: 2rem;">¡Mejora tu nave!</h2>
+<p class="upgrade-subtitle">Elige una carta y responde su pregunta matemática correctamente para obtener la mejora.</p>
+<div class="upgrade-row" id="upgrade-cards"></div>
+</div>
+ 
+    <!-- PANTALLA RESULTADO -->
+<div id="game-over" class="overlay hidden">
+<h1 id="end-title">Game Over</h1>
+<p id="end-desc">Tu nave fue destruida.</p>
+<button class="btn" onclick="location.reload()">Reintentar</button>
+</div>
+</div>
+ 
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+ 
+    // ESTADO DEL JUEGO
+    let gameState = 'START'; // START, PLAYING, BOSS, UPGRADE, GAMEOVER, WIN
+    let phase = 1; 
+    // Progreso por tiempo: cada fase dura un tiempo fijo, mostrado en la barra del HUD
+    const PHASE_DURATIONS = { 1: 20000, 2: 25000, 3: 30000 }; // ms — fácil, medio, difícil
+    let phaseStartTime = 0;
+    // Obstáculos tipo "pared" con 3 opciones matemáticas
+    let walls = [];
+    let nextWallTime = 0;
+    // SISTEMA DE PREGUNTAS (10 en total)
+    let questions = [];
+    let currentQuestionIndex = 0;
+    let bossMaxHp = 3;
+    let bossCurrentHp = 3;
+
+    // MEJORAS DE NAVE
+    let fireCooldown = 300;   // ms entre disparos, se reduce con la mejora "Disparo rápido"
+    let doubleLaser = false;  // habilita un segundo láser lateral
+    let upgradeCards = [];
+    const upgradeOptions = [
+        {
+            id: 'vida', icon: '❤️', title: 'Escudo extra', desc: '+1 vida máxima para tu nave.',
+            apply: () => { player.lives = Math.min(5, player.lives + 1); updateHUD(); }
+        },
+        {
+            id: 'rapido', icon: '⚡', title: 'Disparo rápido', desc: 'Reduce el tiempo entre disparos.',
+            apply: () => { fireCooldown = Math.max(120, fireCooldown - 60); }
+        },
+        {
+            id: 'doble', icon: '🔫', title: 'Láser doble', desc: 'Dispara un láser adicional a tu costado.',
+            apply: () => { doubleLaser = true; }
+        }
+    ];
+ 
+    // ENTIDADES
+    const player = { x: 375, y: 500, w: 40, h: 40, speed: 5, lives: 3, icon: '🚀' };
+    let lasers = [];
+    let enemies = [];
+    let asteroids = [];
+    let particles = [];
+    let stars = [];
+ 
+    // CONTROLES
+    const keys = { w: false, a: false, s: false, d: false, ' ': false };
+ 
+    window.addEventListener('keydown', e => { 
+        if(e.key.toLowerCase() in keys) keys[e.key.toLowerCase()] = true; 
+        if(e.key === ' ') e.preventDefault(); // evita que la página haga scroll con espacio
+    });
+    window.addEventListener('keyup', e => { 
+        if(e.key.toLowerCase() in keys) keys[e.key.toLowerCase()] = false; 
+    });
+    let lastShotTime = 0;
+
+    function r(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+    // GENERA UNA SOLA PREGUNTA (reutilizada por el set de 10 y por las cartas de mejora)
+    function generateSingleQuestion(op, difficulty) {
+        const ops = ['+', '-', '*', '/'];
+        if(!op) op = ops[r(0, 3)];
+        if(!difficulty) difficulty = 2; // 1 = fácil, 2 = media, 3 = difícil
+        let a, b, ans;
+        if(difficulty === 1) {
+            if(op === '+') { a = r(2,15);  b = r(2,15);  ans = a+b; }
+            if(op === '-') { a = r(5,20);  b = r(1,a);   ans = a-b; }
+            if(op === '*') { a = r(1,5);   b = r(1,5);   ans = a*b; }
+            if(op === '/') { b = r(1,5);   ans = r(1,5); a = b*ans; }
+        } else if(difficulty === 3) {
+            if(op === '+') { a = r(30,90); b = r(30,90); ans = a+b; }
+            if(op === '-') { a = r(40,99); b = r(10,a);  ans = a-b; }
+            if(op === '*') { a = r(5,12);  b = r(5,12);  ans = a*b; }
+            if(op === '/') { b = r(3,12);  ans = r(3,12); a = b*ans; }
+        } else {
+            if(op === '+') { a = r(10,50); b = r(10,50); ans = a+b; }
+            if(op === '-') { a = r(20,50); b = r(5,a); ans = a-b; }
+            if(op === '*') { a = r(3,10); b = r(3,10); ans = a*b; }
+            if(op === '/') { b = r(2,10); ans = r(2,10); a = b*ans; }
+        }
+        let opts = [ans];
+        while(opts.length < 4) {
+            let fake = ans + (r(1,6) * (Math.random()>0.5?1:-1));
+            if(fake >= 0 && !opts.includes(fake)) opts.push(fake);
+        }
+        return { text: `${a} ${op} ${b} = ?`, ans: ans, opts: opts.sort(()=>Math.random()-0.5) };
+    }
+ 
+    // GENERADOR DE PREGUNTAS (10 preguntas de la misión, de fácil a difícil)
+    // Las primeras 3 se usan en el jefe de fase 1, las siguientes 3 en el de fase 2,
+    // y las últimas 4 en el de fase 3 — así la dificultad sube junto con la fase.
+    function generateQuestions() {
+        const ops = ['+', '-', '*', '/'];
+        const q = [];
+        for(let i = 0; i < 10; i++) {
+            const difficulty = i < 3 ? 1 : i < 6 ? 2 : 3;
+            q.push(generateSingleQuestion(ops[i % 4], difficulty));
+        }
+        return q;
+    }
+
+    // OBSTÁCULO "PARED" CON 3 OPCIONES MATEMÁTICAS
+    function updateTimeBar(progress) {
+        document.getElementById('hud-time-bar').style.width = (progress * 100) + '%';
+    }
+
+    function wallInterval() {
+        // Más frecuente a medida que avanza la fase: fácil al inicio, difícil en la fase final
+        return Math.max(3500, 8500 - (phase - 1) * 1800);
+    }
+
+    function generateWallQuestion() {
+        // Las paredes siempre usan matemáticas simples (nunca dificultad 3) para no frenar la esquiva
+        const wallDifficulty = phase === 3 ? 2 : 1;
+        const full = generateSingleQuestion(null, wallDifficulty); // 4 opciones, tomamos 3 (incluye siempre la correcta)
+        let wrongOpts = full.opts.filter(o => o !== full.ans).slice(0, 2);
+        let opts = [...wrongOpts, full.ans].sort(() => Math.random() - 0.5);
+        return { text: full.text, ans: full.ans, opts: opts };
+    }
+
+    function spawnWall() {
+        const q = generateWallQuestion();
+        const gateWidth = 800 / 3;
+        const gates = q.opts.map((opt, i) => ({
+            x: i * gateWidth, w: gateWidth, label: opt, correct: opt === q.ans
+        }));
+        walls.push({
+            y: -40, h: 40, speed: 1.4 + (phase - 1) * 0.4,
+            gates: gates, questionText: q.text, resolved: false
+        });
+    }
+ 
+    // MECÁNICAS ARCADE
+    function shootLaser() {
+        lasers.push({ x: player.x + 15, y: player.y, w: 10, h: 20 });
+        if(doubleLaser) {
+            lasers.push({ x: player.x - 12, y: player.y + 6, w: 10, h: 20 });
+        }
+    }
+ 
+    // Tipos de bichos disponibles según la fase, de más fácil a más difícil
+    const ENEMY_TYPES = {
+        normal: { icon: '👾' },  // baja recto, el más simple
+        zigzag: { icon: '👽' },  // baja serpenteando de lado a lado
+        diver:  { icon: '🦂' },  // baja en línea recta pero mucho más rápido
+        chaser: { icon: '👻' }   // baja recto y además deriva lentamente hacia el jugador
+    };
+
+    function pickEnemyType() {
+        // Fase 1: solo el tipo más simple (fácil de esquivar y disparar)
+        if(phase === 1) return 'normal';
+        // Fase 2: se agrega variedad de movimiento
+        if(phase === 2) return Math.random() < 0.55 ? 'normal' : (Math.random() < 0.5 ? 'zigzag' : 'diver');
+        // Fase 3: todos los tipos, con más probabilidad de los difíciles
+        const roll = Math.random();
+        if(roll < 0.25) return 'normal';
+        if(roll < 0.5) return 'zigzag';
+        if(roll < 0.78) return 'diver';
+        return 'chaser';
+    }
+
+    function spawnEntities() {
+        // La probabilidad de aparición y la velocidad crecen con la fase: fase 1 muy suave, fase 3 exigente
+        const enemyChance = 0.012 + (phase - 1) * 0.028;    // fase1: 0.012, fase2: 0.04, fase3: 0.068
+        const asteroidChance = 0.006 + (phase - 1) * 0.02;  // fase1: 0.006, fase2: 0.026, fase3: 0.046
+        const speedBoost = (phase - 1) * 1.6;               // salto de velocidad más marcado por fase
+
+        if(Math.random() < enemyChance) {
+            const type = pickEnemyType();
+            const baseX = r(20, 750);
+            const enemy = {
+                x: baseX, y: -40, w: 35, h: 35,
+                speed: 1.5 + speedBoost, icon: ENEMY_TYPES[type].icon, type: type,
+                baseX: baseX, t: 0
+            };
+            if(type === 'diver') enemy.speed += 2.5; // cae mucho más rápido
+            if(type === 'chaser') enemy.speed *= 0.8; // más lento cayendo, pero te persigue
+            enemies.push(enemy);
+        }
+        if(Math.random() < asteroidChance) {
+            asteroids.push({ x: r(20, 750), y: -40, w: 40, h: 40, speed: 2.5 + phase * 0.8 + speedBoost * 0.5, icon: '☄️' });
+        }
+    }
+ 
+    function createExplosion(x, y, color) {
+        for(let i=0; i<10; i++) {
+            particles.push({
+                x: x+20, y: y+20, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10,
+                life: 1, color: color
+            });
+        }
+    }
+ 
+    function initStars() {
+        for(let i=0; i<100; i++) stars.push({ x: r(0,800), y: r(0,600), speed: r(1,3) });
+    }
+ 
+    // UPDATE Y DRAW
+    function update() {
+        if(gameState !== 'PLAYING') return;
+ 
+        // Jugador
+        if(keys.w && player.y > 0) player.y -= player.speed;
+        if(keys.s && player.y < 560) player.y += player.speed;
+        if(keys.a && player.x > 0) player.x -= player.speed;
+        if(keys.d && player.x < 760) player.x += player.speed;
+ 
+        // Fondo (Estrellas)
+        stars.forEach(s => { s.y += s.speed; if(s.y > 600) s.y = 0; });
+
+        // Disparo automático: mientras se mantenga ESPACIO presionado, dispara según el cooldown actual
+        if(keys[' '] && Date.now() - lastShotTime >= fireCooldown) {
+            shootLaser();
+            lastShotTime = Date.now();
+        }
+
+        // Progreso de la fase por TIEMPO (ya no por bichos eliminados)
+        const elapsed = Date.now() - phaseStartTime;
+        const progress = Math.min(1, elapsed / PHASE_DURATIONS[phase]);
+        updateTimeBar(progress);
+        if(progress >= 1) { triggerBoss(); return; }
+
+        // Obstáculo tipo pared: aparece periódicamente con 3 opciones matemáticas
+        if(Date.now() > nextWallTime) {
+            spawnWall();
+            nextWallTime = Date.now() + wallInterval();
+        }
+        walls.forEach((w, i) => {
+            w.y += w.speed;
+            if(w.y > 600) { walls.splice(i, 1); return; }
+            if(!w.resolved && w.y + w.h >= player.y && w.y <= player.y + player.h) {
+                w.resolved = true;
+                const centerX = player.x + player.w / 2;
+                const gate = w.gates.find(g => centerX >= g.x && centerX < g.x + g.w);
+                if(!gate || !gate.correct) {
+                    takeDamage();
+                    createExplosion(player.x, player.y, '#ef4444');
+                }
+            }
+        });
+ 
+        // Lasers
+        lasers.forEach((l, i) => {
+            l.y -= 10;
+            if(l.y < 0) lasers.splice(i, 1);
+        });
+ 
+        // Bichos
+        enemies.forEach((e, i) => {
+            e.y += e.speed;
+            e.t = (e.t || 0) + 1;
+            if(e.type === 'zigzag') {
+                e.x = e.baseX + Math.sin(e.t * 0.08) * 60; // serpentea de lado a lado
+            } else if(e.type === 'chaser') {
+                const dir = player.x > e.x ? 1 : -1;
+                e.x += dir * 1.1; // deriva lentamente hacia la posición del jugador
+            }
+            e.x = Math.max(0, Math.min(760, e.x));
+            if(e.y > 600) enemies.splice(i, 1);
+            // Colision Laser vs Bicho
+            lasers.forEach((l, li) => {
+                if(l.x < e.x + e.w && l.x + l.w > e.x && l.y < e.y + e.h && l.y + l.h > e.y) {
+                    createExplosion(e.x, e.y, '#10b981');
+                    enemies.splice(i, 1);
+                    lasers.splice(li, 1);
+                }
+            });
+        });
+ 
+        // Asteroides
+        asteroids.forEach((a, i) => {
+            a.y += a.speed;
+            if(a.y > 600) asteroids.splice(i, 1);
+            // Colision Player vs Asteroide / Bicho
+            if(a.x < player.x + player.w && a.x + a.w > player.x && a.y < player.y + player.h && a.y + a.h > player.y) {
+                asteroids.splice(i, 1);
+                takeDamage();
+            }
+        });
+ 
+        enemies.forEach((e, i) => {
+            if(e.x < player.x + player.w && e.x + e.w > player.x && e.y < player.y + player.h && e.y + e.h > player.y) {
+                enemies.splice(i, 1);
+                takeDamage();
+            }
+        });
+ 
+        // Partículas
+        particles.forEach((p, i) => {
+            p.x += p.vx; p.y += p.vy; p.life -= 0.05;
+            if(p.life <= 0) particles.splice(i, 1);
+        });
+ 
+        spawnEntities();
+    }
+ 
+    function draw() {
+        // Fondo
+        let bg = phase === 1 ? '#0f172a' : phase === 2 ? '#1e1b4b' : '#000000';
+        ctx.fillStyle = bg;
+        ctx.fillRect(0,0,800,600);
+ 
+        // Estrellas
+        ctx.fillStyle = 'white';
+        stars.forEach(s => ctx.fillRect(s.x, s.y, 2, 2));
+ 
+        if(gameState === 'PLAYING') {
+            // Player
+            ctx.font = '35px Arial';
+            ctx.fillText(player.icon, player.x, player.y + 35);
+ 
+            // Lasers
+            ctx.fillStyle = '#38bdf8';
+            lasers.forEach(l => {
+                ctx.shadowBlur = 10; ctx.shadowColor = '#38bdf8';
+                ctx.fillRect(l.x, l.y, l.w, l.h);
+                ctx.shadowBlur = 0;
+            });
+ 
+            // Enemigos y Asteroides
+            enemies.forEach(e => { ctx.fillText(e.icon, e.x, e.y + 30); });
+            asteroids.forEach(a => { ctx.fillText(a.icon, a.x, a.y + 30); });
+ 
+            // Particulas
+            particles.forEach(p => {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
+                ctx.globalAlpha = 1;
+            });
+
+            // Obstáculo pared: banner con la pregunta + 3 puertas con las opciones
+            walls.forEach(w => {
+                ctx.fillStyle = 'rgba(15,23,42,0.9)';
+                ctx.fillRect(0, w.y - 28, 800, 24);
+                ctx.strokeStyle = '#eab308';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(0, w.y - 28, 800, 24);
+                ctx.fillStyle = '#eab308';
+                ctx.font = 'bold 15px Segoe UI';
+                ctx.textAlign = 'center';
+                ctx.fillText(w.questionText, 400, w.y - 11);
+
+                w.gates.forEach(g => {
+                    ctx.fillStyle = 'rgba(56,189,248,0.18)';
+                    ctx.fillRect(g.x + 4, w.y, g.w - 8, w.h);
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(g.x + 4, w.y, g.w - 8, w.h);
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 22px Segoe UI';
+                    ctx.fillText(g.label, g.x + g.w / 2, w.y + w.h / 2 + 8);
+                });
+                ctx.textAlign = 'left';
+            });
+        }
+    }
+ 
+    function gameLoop() {
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+ 
+    // LÓGICA DE EVENTOS
+    function startGame() {
+        document.getElementById('start-screen').classList.add('hidden');
+        questions = generateQuestions();
+        initStars();
+        gameState = 'PLAYING';
+        phaseStartTime = Date.now();
+        nextWallTime = Date.now() + 3000; // primer muro a los 3s de iniciar
+        walls = [];
+        updateHUD();
+        gameLoop();
+    }
+ 
+    function takeDamage() {
+        player.lives--;
+        createExplosion(player.x, player.y, '#ef4444');
+        updateHUD();
+        if(player.lives <= 0) {
+            gameState = 'GAMEOVER';
+            document.getElementById('game-over').classList.remove('hidden');
+        }
+    }
+ 
+    function updateHUD() {
+        document.getElementById('hud-lives').innerText = '❤️'.repeat(player.lives);
+        document.getElementById('hud-phase').innerText = `Fase: ${phase}/3`;
+    }
+ 
+    // BATALLA DE JEFE (MATEMÁTICAS)
+    function triggerBoss() {
+        gameState = 'BOSS';
+        lasers = []; enemies = []; asteroids = []; walls = [];
+        document.getElementById('boss-ui').classList.remove('hidden');
+        // Configurar Jefe según la fase (3, 3 y 4 preguntas respectivamente para llegar a 10)
+        bossMaxHp = phase === 3 ? 4 : 3;
+        bossCurrentHp = bossMaxHp;
+        let icons = ['🛸', '👾', '👹'];
+        document.getElementById('boss-icon').innerText = icons[phase-1];
+        renderBossQuestion();
+    }
+ 
+    function renderBossQuestion() {
+        // Actualizar barra de vida del jefe
+        let hpHTML = '';
+        for(let i=0; i<bossMaxHp; i++) {
+            hpHTML += `<div class="hp-dot ${i >= bossCurrentHp ? 'empty' : ''}"></div>`;
+        }
+        document.getElementById('boss-hp-bar').innerHTML = hpHTML;
+ 
+        // Cargar pregunta
+        let q = questions[currentQuestionIndex];
+        document.getElementById('boss-question').innerText = q.text;
+        let optsHTML = '';
+        q.opts.forEach(opt => {
+            optsHTML += `<button class="opt-btn" onclick="checkBossAnswer(${opt}, ${q.ans})">${opt}</button>`;
+        });
+        document.getElementById('boss-options').innerHTML = optsHTML;
+    }
+ 
+    function checkBossAnswer(selected, correct) {
+        if(selected === correct) {
+            bossCurrentHp--;
+            currentQuestionIndex++;
+            createExplosion(400, 300, '#eab308'); // Efecto visual detrás del UI
+            if(bossCurrentHp <= 0) {
+                // Jefe derrotado
+                document.getElementById('boss-ui').classList.add('hidden');
+                phase++;
+                if(phase > 3) {
+                    gameState = 'WIN';
+                    document.getElementById('game-over').classList.remove('hidden');
+                    document.getElementById('end-title').innerText = "¡Llegaste a la Luna! 🌕";
+                    document.getElementById('end-desc').innerText = "¡Misión completada con éxito!";
+                } else {
+                    // Antes de la siguiente fase, se ofrece una mejora de nave
+                    triggerUpgradeSelection();
+                }
+            } else {
+                renderBossQuestion();
+            }
+        } else {
+            // Error, el jugador recibe daño
+            takeDamage();
+            if(player.lives > 0) {
+                // Darle otra oportunidad cambiándole la pregunta o dejándole la misma
+                // (Para que no intente a lo loco, se le quita vida)
+                document.getElementById('boss-question').style.color = '#ef4444';
+                setTimeout(() => document.getElementById('boss-question').style.color = 'white', 500);
+            } else {
+                document.getElementById('boss-ui').classList.add('hidden');
+            }
+        }
+    }
+
+    // SELECCIÓN DE MEJORA DE NAVE (CARTAS)
+    function triggerUpgradeSelection() {
+        gameState = 'UPGRADE';
+        upgradeCards = upgradeOptions.map(opt => ({
+            ...opt,
+            question: generateSingleQuestion(),
+            active: false,
+            failed: false
+        }));
+        document.getElementById('upgrade-ui').classList.remove('hidden');
+        renderUpgradeCards();
+    }
+
+    function renderUpgradeCards() {
+        const container = document.getElementById('upgrade-cards');
+        container.innerHTML = '';
+        upgradeCards.forEach((card, idx) => {
+            const div = document.createElement('div');
+            div.className = 'upgrade-card' + (card.failed ? ' failed' : '');
+
+            if(card.failed) {
+                div.innerHTML = `
+                    <div class="card-icon">${card.icon}</div>
+                    <div class="card-title">${card.title}</div>
+                    <div class="card-status">Respuesta incorrecta</div>`;
+            } else if(card.active) {
+                const optsHTML = card.question.opts
+                    .map(opt => `<button class="opt-btn small" onclick="answerUpgradeCard(${idx}, ${opt})">${opt}</button>`)
+                    .join('');
+                div.innerHTML = `
+                    <div class="card-icon">${card.icon}</div>
+                    <div class="card-title">${card.title}</div>
+                    <div class="card-question">${card.question.text}</div>
+                    <div class="card-opts">${optsHTML}</div>`;
+            } else {
+                div.innerHTML = `
+                    <div class="card-icon">${card.icon}</div>
+                    <div class="card-title">${card.title}</div>
+                    <div class="card-desc">${card.desc}</div>
+                    <button class="btn small-btn" onclick="selectUpgradeCard(${idx})">Elegir</button>`;
+            }
+            container.appendChild(div);
+        });
+    }
+
+    function selectUpgradeCard(idx) {
+        upgradeCards.forEach((c, i) => { c.active = (i === idx); });
+        renderUpgradeCards();
+    }
+
+    function answerUpgradeCard(idx, selected) {
+        const card = upgradeCards[idx];
+        if(selected === card.question.ans) {
+            card.apply();
+            document.getElementById('upgrade-ui').classList.add('hidden');
+            finishUpgradeSelection();
+        } else {
+            card.failed = true;
+            card.active = false;
+            renderUpgradeCards();
+            // Si falló las tres cartas, continúa sin mejora
+            if(upgradeCards.every(c => c.failed)) {
+                setTimeout(() => {
+                    document.getElementById('upgrade-ui').classList.add('hidden');
+                    finishUpgradeSelection();
+                }, 1000);
+            }
+        }
+    }
+
+    function finishUpgradeSelection() {
+        gameState = 'PLAYING';
+        phaseStartTime = Date.now();
+        nextWallTime = Date.now() + 3000;
+        walls = [];
+        updateHUD();
+    }
+</script>
+</body>
+</html>
