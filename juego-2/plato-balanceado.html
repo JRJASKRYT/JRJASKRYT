@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plato Balanceado</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(#8ecae6, #d0f4de);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    user-select: none;
+  }
+  h1 { color: #1b4332; margin: 8px 0; }
+  #subtitle { color: #2d6a4f; margin-bottom: 10px; text-align: center; max-width: 600px; }
+  #gameWrap {
+    position: relative;
+    width: 640px;
+    max-width: 95vw;
+  }
+  canvas {
+    background: #fefae0;
+    border: 4px solid #2d6a4f;
+    border-radius: 12px;
+    display: block;
+    width: 100%;
+    touch-action: none;
+  }
+  #hud {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 640px;
+    margin-bottom: 6px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #1b4332;
+  }
+  #overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(27, 67, 50, 0.92);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    text-align: center;
+    padding: 20px;
+  }
+  #overlay.hidden { display: none; }
+  #overlay h2 { font-size: 28px; margin-bottom: 10px; }
+  #overlay p { font-size: 16px; margin: 6px 0; max-width: 480px; }
+  button {
+    margin-top: 16px;
+    padding: 12px 28px;
+    font-size: 16px;
+    background: #52b788;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  button:hover { background: #40916c; }
+  #controls {
+    margin-top: 10px;
+    color: #1b4332;
+    font-size: 13px;
+    text-align: center;
+  }
+  .plateBtn {
+    display: none;
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+    border-radius: 50%;
+  }
+  @media (max-width: 640px) {
+    .plateBtn { display: inline-block; }
+  }
+  #touchControls {
+    display: flex;
+    gap: 40px;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<h1>🍽️ Plato Balanceado</h1>
+<p id="subtitle">Mueve el plato y atrapa solo los alimentos saludables. ¡Evita los no saludables!</p>
+
+<div id="hud">
+  <div>Puntaje: <span id="score">0</span></div>
+  <div>Ronda: <span id="round">1</span> / 3</div>
+  <div>Vidas: <span id="lives">❤️❤️❤️</span></div>
+</div>
+
+<div id="gameWrap">
+  <canvas id="game" width="640" height="420"></canvas>
+  <div id="overlay">
+    <h2 id="overlayTitle">Plato Balanceado</h2>
+    <p id="overlayText">Atrapa frutas, verduras, proteínas y cereales. Evita dulces, frituras y gaseosas. Suma 15 puntos por ronda para avanzar. Pierdes una vida si dejas caer un alimento saludable o atrapas uno no saludable.</p>
+    <button id="startBtn">Jugar</button>
+  </div>
+</div>
+
+<div id="touchControls">
+  <button class="plateBtn" id="leftBtn">◀</button>
+  <button class="plateBtn" id="rightBtn">▶</button>
+</div>
+
+<div id="controls">Controles: flechas ← → o A / D, o arrastra el dedo sobre el juego (móvil)</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+const scoreEl = document.getElementById('score');
+const roundEl = document.getElementById('round');
+const livesEl = document.getElementById('lives');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+
+const HEALTHY = [
+  { name: 'manzana', emoji: '🍎' },
+  { name: 'zanahoria', emoji: '🥕' },
+  { name: 'brócoli', emoji: '🥦' },
+  { name: 'plátano', emoji: '🍌' },
+  { name: 'huevo', emoji: '🥚' },
+  { name: 'pan integral', emoji: '🍞' },
+];
+const UNHEALTHY = [
+  { name: 'dona', emoji: '🍩' },
+  { name: 'papas fritas', emoji: '🍟' },
+  { name: 'gaseosa', emoji: '🥤' },
+  { name: 'dulce', emoji: '🍬' },
+  { name: 'hamburguesa', emoji: '🍔' },
+];
+
+const ROUND_TARGET = 15;
+const MAX_ROUNDS = 3;
+const MAX_LIVES = 3;
+
+let plate = { x: W/2 - 45, w: 90, h: 18, y: H - 34, speed: 8 };
+let items = [];
+let score = 0;
+let lives = MAX_LIVES;
+let round = 1;
+let spawnTimer = 0;
+let spawnInterval = 70;
+let fallSpeedBase = 2.2;
+let keys = {};
+let running = false;
+let animFrame = null;
+
+function resetRoundState() {
+  items = [];
+  spawnTimer = 0;
+}
+
+function resetGame() {
+  score = 0;
+  lives = MAX_LIVES;
+  round = 1;
+  spawnInterval = 70;
+  fallSpeedBase = 2.2;
+  resetRoundState();
+  updateHUD();
+}
+
+function updateHUD() {
+  scoreEl.textContent = score;
+  roundEl.textContent = round;
+  livesEl.textContent = '❤️'.repeat(Math.max(lives,0)) + '🖤'.repeat(MAX_LIVES - Math.max(lives,0));
+}
+
+function spawnItem() {
+  const isHealthy = Math.random() < 0.6;
+  const pool = isHealthy ? HEALTHY : UNHEALTHY;
+  const food = pool[Math.floor(Math.random() * pool.length)];
+  items.push({
+    x: 30 + Math.random() * (W - 60),
+    y: -20,
+    r: 20,
+    speed: fallSpeedBase + Math.random() * 1.2,
+    healthy: isHealthy,
+    emoji: food.emoji,
+    name: food.name,
+  });
+}
+
+function loseLife() {
+  lives--;
+  updateHUD();
+  if (lives <= 0) {
+    endGame(false);
+  }
+}
+
+function checkRoundComplete() {
+  if (score >= ROUND_TARGET * round) {
+    if (round >= MAX_ROUNDS) {
+      endGame(true);
+    } else {
+      round++;
+      spawnInterval = Math.max(35, spawnInterval - 12);
+      fallSpeedBase += 0.6;
+      resetRoundState();
+      updateHUD();
+      pauseBriefly(`¡Ronda ${round - 1} completa!`, `Buen trabajo armando tu plato balanceado. Empieza la ronda ${round}, ¡ahora un poco más rápido!`);
+    }
+  }
+}
+
+function pauseBriefly(title, text) {
+  running = false;
+  cancelAnimationFrame(animFrame);
+  overlayTitle.textContent = title;
+  overlayText.textContent = text;
+  startBtn.textContent = 'Continuar';
+  overlay.classList.remove('hidden');
+}
+
+function endGame(won) {
+  running = false;
+  cancelAnimationFrame(animFrame);
+  overlayTitle.textContent = won ? '¡Ganaste! 🎉' : 'Juego terminado';
+  overlayText.textContent = won
+    ? `Completaste las ${MAX_ROUNDS} rondas armando platos balanceados con ${score} puntos. ¡Aprendiste a elegir alimentos saludables!`
+    : `Te quedaste sin vidas en la ronda ${round} con ${score} puntos. Presiona jugar de nuevo para intentarlo otra vez.`;
+  startBtn.textContent = 'Jugar de nuevo';
+  overlay.classList.remove('hidden');
+}
+
+function update() {
+  if (keys['ArrowLeft'] || keys['a']) plate.x -= plate.speed;
+  if (keys['ArrowRight'] || keys['d']) plate.x += plate.speed;
+  plate.x = Math.max(0, Math.min(W - plate.w, plate.x));
+
+  spawnTimer++;
+  if (spawnTimer >= spawnInterval) {
+    spawnTimer = 0;
+    spawnItem();
+  }
+
+  for (let i = items.length - 1; i >= 0; i--) {
+    const it = items[i];
+    it.y += it.speed;
+
+    const caughtX = it.x > plate.x - it.r * 0.5 && it.x < plate.x + plate.w + it.r * 0.5;
+    const caughtY = it.y + it.r >= plate.y && it.y < plate.y + plate.h;
+
+    if (caughtY && caughtX) {
+      if (it.healthy) {
+        score += 5;
+      } else {
+        loseLife();
+      }
+      items.splice(i, 1);
+      updateHUD();
+      checkRoundComplete();
+      continue;
+    }
+
+    if (it.y > H + 20) {
+      if (it.healthy) {
+        loseLife();
+      }
+      items.splice(i, 1);
+    }
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = '#e9edc9';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+
+  ctx.font = '32px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (const it of items) {
+    ctx.fillText(it.emoji, it.x, it.y);
+  }
+
+  ctx.fillStyle = '#2d6a4f';
+  ctx.beginPath();
+  ctx.roundRect(plate.x, plate.y, plate.w, plate.h, 8);
+  ctx.fill();
+  ctx.font = '18px sans-serif';
+  ctx.fillText('🍽️', plate.x + plate.w/2, plate.y + plate.h/2);
+}
+
+function loop() {
+  if (!running) return;
+  update();
+  draw();
+  animFrame = requestAnimationFrame(loop);
+}
+
+function startGame(fresh) {
+  if (fresh) resetGame();
+  overlay.classList.add('hidden');
+  running = true;
+  loop();
+}
+
+startBtn.addEventListener('click', () => {
+  const fresh = startBtn.textContent.includes('Jugar');
+  startGame(fresh);
+});
+
+document.addEventListener('keydown', (e) => { keys[e.key] = true; });
+document.addEventListener('keyup', (e) => { keys[e.key] = false; });
+
+let touchActive = false;
+canvas.addEventListener('touchstart', handleTouch, { passive: true });
+canvas.addEventListener('touchmove', handleTouch, { passive: true });
+function handleTouch(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = W / rect.width;
+  const touchX = (e.touches[0].clientX - rect.left) * scaleX;
+  plate.x = Math.max(0, Math.min(W - plate.w, touchX - plate.w/2));
+}
+
+leftBtn.addEventListener('touchstart', () => keys['ArrowLeft'] = true);
+leftBtn.addEventListener('touchend', () => keys['ArrowLeft'] = false);
+rightBtn.addEventListener('touchstart', () => keys['ArrowRight'] = true);
+rightBtn.addEventListener('touchend', () => keys['ArrowRight'] = false);
+
+resetGame();
+draw();
+</script>
+
+</body>
+</html>
