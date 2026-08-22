@@ -31,7 +31,7 @@ Aquí presento los proyectos que he desarrollado:
 * **Enlaces:** [📁 Ver código fuente](./juego-2) | [🎮 Jugar en el navegador](https://JRJASKRYT.github.io/JRJASKRYT/juego-2/plato-balanceado.html)[cite: 1].
 
 
-### 3. [PLato Balanceado]
+### 3. [EcoRush]
 ![Captura del juego 2](captura-juego2.jpg)
 
 * **Descripción:** [Explica brevemente de qué trata y cuál es el objetivo][cite: 1].
@@ -40,7 +40,7 @@ Aquí presento los proyectos que he desarrollado:
 * **Enlaces:** [📁 Ver código fuente](./juego-2) | [🎮 Jugar en el navegador](https://JRJASKRYT.github.io/JRJASKRYT/juego-3/EcoRush.html)[cite: 1].
 
 
-### 4. [PLato Balanceado]
+### 4. [Hydrorush]
 ![Captura del juego 2](captura-juego2.jpg)
 
 * **Descripción:** [Explica brevemente de qué trata y cuál es el objetivo][cite: 1].
@@ -49,7 +49,7 @@ Aquí presento los proyectos que he desarrollado:
 * **Enlaces:** [📁 Ver código fuente](./juego-2) | [🎮 Jugar en el navegador](https://JRJASKRYT.github.io/JRJASKRYT/juego-4/Hydrorush.html)[cite: 1].
 
 
-### 5. [PLato Balanceado]
+### 5. [Financy]
 ![Captura del juego 2](captura-juego2.jpg)
 
 * **Descripción:** [Explica brevemente de qué trata y cuál es el objetivo][cite: 1].
