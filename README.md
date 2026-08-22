@@ -23,7 +23,7 @@ Aquí presento los proyectos que he desarrollado:
 
 ---
 
-### 2. [Nombre de tu segundo juego HTML]
+### 2. [PLato Balanceado]
 ![Captura del juego 2](captura-juego2.jpg)
 
 * **Descripción:** [Explica brevemente de qué trata y cuál es el objetivo][cite: 1].
