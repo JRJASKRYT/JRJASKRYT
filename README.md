@@ -19,7 +19,7 @@ Aquí presento los proyectos que he desarrollado:
 * **Descripción:** [Explica brevemente de qué trata y cuál es el objetivo][cite: 1].
 * **Género:** [Ejemplo: Arcade, Puzzle, Platformer][cite: 1].
 * **Motor o tecnología:** HTML5, CSS y JavaScript[cite: 1].
-* **Enlaces:** [📁 Ver código fuente](./juego-1) | [🎮 Jugar en el navegador](https://JRJASKRYT.github.io/JRJASKRYT/blob/main/juego-1/elevador-lunar.html)[cite: 1].
+* **Enlaces:** [📁 Ver código fuente](./juego-1) | [🎮 Jugar en el navegador](https://jrjaskryt.github.io/JRJASKRYT/juego-1/elevador-lunar.html)[cite: 1].
 
 ---
 
