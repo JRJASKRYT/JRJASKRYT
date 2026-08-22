@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HydroRush: El Desafío de Pichon</title>
+<style>
+  * { box-sizing: border-box; margin:0; padding:0; }
+  html,body{
+    height:100%;
+    background: linear-gradient(#0b1a2b,#0a2540);
+    font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+    touch-action:none;
+    -webkit-user-select:none; user-select:none;
+  }
+  #gameContainer{
+    position:relative;
+    width:min(96vw, 900px);
+    aspect-ratio: 8/5;
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow: 0 0 0 4px #1c3a55, 0 10px 40px rgba(0,0,0,0.6);
+  }
+  canvas{
+    display:block;
+    width:100%;
+    height:100%;
+    background:#87ceeb;
+  }
+  /* ---------- HUD ---------- */
+  #hud{
+    position:absolute; top:0; left:0; right:0;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    padding:10px 14px;
+    pointer-events:none;
+    font-weight:bold;
+    color:#fff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  }
+  .hudBox{
+    background: rgba(10,25,40,0.55);
+    border: 2px solid rgba(255,255,255,0.25);
+    border-radius:10px;
+    padding:6px 12px;
+    backdrop-filter: blur(2px);
+  }
+  #timerBox{ font-size: clamp(16px,3vw,22px); min-width:90px; text-align:center;}
+  #litersBox{ font-size: clamp(13px,2.3vw,17px); color:#9dffb0; text-align:right;}
+  #waterBarWrap{
+    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    width: min(45%, 320px);
+    pointer-events:none;
+  }
+  #waterBarLabel{
+    color:#fff; font-size:clamp(11px,2vw,14px); text-align:center; margin-bottom:3px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+    font-weight:bold;
+  }
+  #waterBarOuter{
+    width:100%; height:20px;
+    background:rgba(0,0,0,0.45);
+    border:2px solid rgba(255,255,255,0.35);
+    border-radius:10px;
+    overflow:hidden;
+  }
+  #waterBarInner{
+    height:100%;
+    width:100%;
+    background: linear-gradient(#4fc3f7,#0277bd);
+    transition: width 0.25s ease, background 0.4s ease;
+  }
+  /* ---------- Overlays ---------- */
+  .overlay{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background: rgba(5,15,25,0.88);
+    color:#fff; text-align:center;
+    padding:20px;
+    gap:14px;
+  }
+  .hidden{ display:none !important; }
+  .overlay h1{
+    font-size: clamp(22px,5vw,38px);
+    color:#ffd54f;
+    text-shadow: 0 3px 6px rgba(0,0,0,0.6);
+  }
+  .overlay h2{
+    font-size: clamp(18px,4vw,28px);
+  }
+  .overlay p{
+    font-size: clamp(12px,2.4vw,16px);
+    max-width:520px;
+    line-height:1.5;
+    color:#dbeeff;
+  }
+  .bigStat{
+    font-size: clamp(20px,4.5vw,32px);
+    color:#7dffa0;
+    font-weight:bold;
+  }
+  button.gameBtn{
+    background: linear-gradient(#29b6f6,#0277bd);
+    border:none;
+    color:#fff;
+    font-weight:bold;
+    font-size: clamp(14px,2.6vw,18px);
+    padding:12px 30px;
+    border-radius:30px;
+    cursor:pointer;
+    box-shadow: 0 4px 0 #01579b, 0 6px 14px rgba(0,0,0,0.5);
+    transition: transform 0.08s ease;
+  }
+  button.gameBtn:active{ transform: translateY(3px); box-shadow: 0 1px 0 #01579b; }
+  .instructions{
+    display:flex; gap:18px; flex-wrap:wrap; justify-content:center;
+    font-size: clamp(11px,2.2vw,14px);
+    color:#cfe9ff;
+    max-width:600px;
+  }
+  .instructions div{
+    background:rgba(255,255,255,0.08);
+    padding:8px 12px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.15);
+  }
+  /* ---------- Touch Controls ---------- */
+  #touchControls{
+    position:absolute; bottom:14px; left:0; right:0;
+    display:flex; justify-content:space-between; align-items:flex-end;
+    padding:0 16px;
+    pointer-events:none;
+  }
+  .touchBtn{
+    pointer-events:all;
+    width:64px; height:64px;
+    border-radius:50%;
+    background: rgba(255,255,255,0.18);
+    border:2px solid rgba(255,255,255,0.5);
+    color:#fff;
+    font-size:26px;
+    display:flex; align-items:center; justify-content:center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .touchBtn:active{ background: rgba(255,255,255,0.4); }
+  #moveBtns{ display:flex; gap:12px; }
+  #repairBtn{
+    width:80px; height:80px;
+    font-size:30px;
+    background: rgba(255,193,7,0.35);
+    border-color: rgba(255,193,7,0.8);
+  }
+  #repairBtn:active{ background: rgba(255,193,7,0.6); }
+  #actionBtns{ display:flex; gap:12px; align-items:flex-end; }
+  #shootBtn{
+    width:74px; height:74px;
+    font-size:28px;
+    background: rgba(41,182,246,0.35);
+    border-color: rgba(41,182,246,0.85);
+  }
+  #shootBtn:active{ background: rgba(41,182,246,0.6); }
+</style>
+</head>
+<body>
+<div id="gameContainer">
+  <canvas id="gameCanvas" width="800" height="500"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div id="timerBox" class="hudBox">⏱ 60</div>
+    <div id="litersBox" class="hudBox">💧 0 L ahorrados</div>
+  </div>
+  <div id="waterBarWrap">
+    <div id="waterBarLabel">TANQUE PRINCIPAL — SAN PEDRO — <span id="waterPercentText">100%</span></div>
+    <div id="waterBarOuter"><div id="waterBarInner"></div></div>
+  </div>
+
+  <!-- Touch controls -->
+  <div id="touchControls">
+    <div id="moveBtns">
+      <div class="touchBtn" id="btnLeft">◀</div>
+      <div class="touchBtn" id="btnRight">▶</div>
+    </div>
+    <div id="actionBtns">
+      <div class="touchBtn" id="shootBtn">💦</div>
+      <div class="touchBtn" id="repairBtn">🔧</div>
+    </div>
+  </div>
+
+  <!-- Start screen -->
+  <div class="overlay" id="startScreen">
+    <h1>💧 HydroRush</h1>
+    <h2>El Desafío de Pichon</h2>
+    <p>Oliver "Pichon" Paucara, joven paceño de 21 años, protege el tanque principal de agua de San Pedro.
+    Intercepta a los <b>Derrochadores</b> antes de que lleguen al tanque y repara las <b>fugas</b> antes de que
+    vacíen el agua de todo el barrio. ¡Aguanta 60 segundos con más del 40% de agua!</p>
+    <div class="instructions">
+      <div>🚶 <b>A / D</b> o <b>flechas</b>: mover a Pichon</div>
+      <div>💦 <b>F</b> o <b>clic derecho</b>: disparar la Aqua-Blaster</div>
+      <div>🔧 <b>Espacio</b> o <b>clic</b>: reparar fuga cercana</div>
+      <div>📱 En móvil: usa los botones en pantalla</div>
+    </div>
+    <button class="gameBtn" id="startBtn">Comenzar Turno</button>
+  </div>
+
+  <!-- Victory screen -->
+  <div class="overlay hidden" id="winScreen">
+    <h1>🏆 ¡La Paz se salvó!</h1>
+    <h2>Pichon protegió el tanque de San Pedro</h2>
+    <p>Nivel final del tanque: <span id="winPercent" class="bigStat">0%</span></p>
+    <p>Litros reales ahorrados por Pichon:</p>
+    <div id="winLiters" class="bigStat">0 L</div>
+    <button class="gameBtn" id="restartBtnWin">Jugar de nuevo</button>
+  </div>
+
+  <!-- Defeat screen -->
+  <div class="overlay hidden" id="loseScreen">
+    <h1>💦 "La Paz se quedó sin agua"</h1>
+    <p>El tanque principal se vació por completo. Los derrochadores y las fugas ganaron esta ronda.</p>
+    <p>Litros que Pichon alcanzó a salvar:</p>
+    <div id="loseLiters" class="bigStat">0 L</div>
+    <button class="gameBtn" id="restartBtnLose">Reintentar</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const GROUND_Y = 430;
+
+  // ---------- DOM refs ----------
+  const startScreen = document.getElementById('startScreen');
+  const winScreen = document.getElementById('winScreen');
+  const loseScreen = document.getElementById('loseScreen');
+  const startBtn = document.getElementById('startBtn');
+  const restartBtnWin = document.getElementById('restartBtnWin');
+  const restartBtnLose = document.getElementById('restartBtnLose');
+  const timerBox = document.getElementById('timerBox');
+  const litersBox = document.getElementById('litersBox');
+  const waterBarInner = document.getElementById('waterBarInner');
+  const waterPercentText = document.getElementById('waterPercentText');
+  const winPercent = document.getElementById('winPercent');
+  const winLiters = document.getElementById('winLiters');
+  const loseLiters = document.getElementById('loseLiters');
+  const btnLeft = document.getElementById('btnLeft');
+  const btnRight = document.getElementById('btnRight');
+  const repairBtn = document.getElementById('repairBtn');
+  const shootBtn = document.getElementById('shootBtn');
+
+  // ---------- Game state ----------
+  let state = 'idle'; // idle | playing | win | lose
+  let waterPercent = 100;
+  let litersSaved = 0;
+  let timeLeft = 60;
+  let lastTime = 0;
+  let enemySpawnTimer = 0;
+  let leakSpawnTimer = 0;
+  let elapsed = 0;
+
+  const player = {
+    x: 400, y: GROUND_Y,
+    w: 42, h: 58,
+    speed: 260,
+    facing: 1,
+    walkPhase: 0,
+    moving: false
+  };
+
+  const TANK = { x: 400, top: 210, base: GROUND_Y, width: 190 };
+  const TANK_LEFT = TANK.x - TANK.width/2;
+  const TANK_RIGHT = TANK.x + TANK.width/2;
+
+  let enemies = [];
+  let leaks = [];
+  let floatingTexts = [];
+  let projectiles = [];
+  let shootCooldown = 0;
+  const SHOOT_COOLDOWN_MAX = 0.35;
+
+  const LEAK_SPOTS = [
+    {x: TANK.x - 65, y: TANK.top + 40},
+    {x: TANK.x + 65, y: TANK.top + 40},
+    {x: TANK.x - 80, y: TANK.top + 100},
+    {x: TANK.x + 80, y: TANK.top + 100},
+    {x: TANK.x - 40, y: TANK.top + 160},
+    {x: TANK.x + 40, y: TANK.top + 160},
+  ];
+
+  const keys = { left:false, right:false };
+  let repairPressed = false;
+  let shootHeld = false;
+
+  // ---------- Input ----------
+  window.addEventListener('keydown', (e)=>{
+    if(['ArrowLeft','a','A'].includes(e.key)) keys.left = true;
+    if(['ArrowRight','d','D'].includes(e.key)) keys.right = true;
+    if(e.key === ' '){ repairPressed = true; e.preventDefault(); }
+    if(['f','F','j','J'].includes(e.key)){ shootHeld = true; }
+  });
+  window.addEventListener('keyup', (e)=>{
+    if(['ArrowLeft','a','A'].includes(e.key)) keys.left = false;
+    if(['ArrowRight','d','D'].includes(e.key)) keys.right = false;
+    if(e.key === ' ') repairPressed = false;
+    if(['f','F','j','J'].includes(e.key)){ shootHeld = false; }
+  });
+  canvas.addEventListener('mousedown', (e)=>{
+    if(e.button === 2){ shootHeld = true; } else { repairPressed = true; }
+  });
+  canvas.addEventListener('mouseup', (e)=>{
+    if(e.button === 2){ shootHeld = false; } else { repairPressed = false; }
+  });
+  canvas.addEventListener('contextmenu', (e)=> e.preventDefault());
+
+  function bindHold(el, onDown, onUp){
+    el.addEventListener('touchstart', (e)=>{ e.preventDefault(); onDown(); }, {passive:false});
+    el.addEventListener('touchend', (e)=>{ e.preventDefault(); onUp(); }, {passive:false});
+    el.addEventListener('mousedown', (e)=>{ e.preventDefault(); onDown(); });
+    el.addEventListener('mouseup', (e)=>{ e.preventDefault(); onUp(); });
+    el.addEventListener('mouseleave', ()=>{ onUp(); });
+  }
+  bindHold(btnLeft, ()=>keys.left=true, ()=>keys.left=false);
+  bindHold(btnRight, ()=>keys.right=true, ()=>keys.right=false);
+  bindHold(repairBtn, ()=>repairPressed=true, ()=>repairPressed=false);
+  bindHold(shootBtn, ()=>shootHeld=true, ()=>shootHeld=false);
+
+  // ---------- Helpers ----------
+  function rand(min,max){ return Math.random()*(max-min)+min; }
+  function clamp(v,min,max){ return Math.max(min,Math.min(max,v)); }
+
+  function addFloatingText(x,y,text,color){
+    floatingTexts.push({x,y,text,color,alpha:1,vy:-40,life:1.1});
+  }
+
+  function spawnEnemy(){
+    const fromLeft = Math.random() < 0.5;
+    const speed = rand(70,120) + elapsed*1.2;
+    enemies.push({
+      x: fromLeft ? -30 : W+30,
+      y: GROUND_Y,
+      dir: fromLeft ? 1 : -1,
+      speed: Math.min(speed, 190),
+      r: 17,
+      bob: Math.random()*Math.PI*2,
+      alive: true
+    });
+  }
+
+  function spawnLeak(){
+    const freeSpots = LEAK_SPOTS.filter(s => !leaks.some(l => l.x===s.x && l.y===s.y));
+    if(freeSpots.length === 0) return;
+    const spot = freeSpots[Math.floor(Math.random()*freeSpots.length)];
+    leaks.push({ x: spot.x, y: spot.y, active:true, drip:0, drainRate: rand(0.55,0.85) });
+  }
+
+  function fireProjectile(){
+    projectiles.push({
+      x: player.x + player.facing*16,
+      y: player.y - 40,
+      dir: player.facing,
+      speed: 480,
+      r: 7
+    });
+  }
+
+  function damageTank(amount){
+    waterPercent = clamp(waterPercent - amount, 0, 100);
+  }
+
+  function rewardLiters(amount, x, y, label){
+    litersSaved += Math.round(amount);
+    addFloatingText(x, y, `+${Math.round(amount)}L ${label}`, '#7dffa0');
+  }
+
+  // ---------- Reset / Start ----------
+  function resetGame(){
+    waterPercent = 100;
+    litersSaved = 0;
+    timeLeft = 60;
+    elapsed = 0;
+    enemySpawnTimer = 0;
+    leakSpawnTimer = 1.5;
+    enemies = [];
+    leaks = [];
+    floatingTexts = [];
+    projectiles = [];
+    shootCooldown = 0;
+    player.x = 400;
+    player.moving = false;
+  }
+
+  function startGame(){
+    resetGame();
+    state = 'playing';
+    startScreen.classList.add('hidden');
+    winScreen.classList.add('hidden');
+    loseScreen.classList.add('hidden');
+    lastTime = performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  startBtn.addEventListener('click', startGame);
+  restartBtnWin.addEventListener('click', startGame);
+  restartBtnLose.addEventListener('click', startGame);
+
+  function endGame(win){
+    state = win ? 'win' : 'lose';
+    if(win){
+      winPercent.textContent = Math.round(waterPercent) + '%';
+      winLiters.textContent = litersSaved + ' L';
+      winScreen.classList.remove('hidden');
+    } else {
+      loseLiters.textContent = litersSaved + ' L';
+      loseScreen.classList.remove('hidden');
+    }
+  }
+
+  // ---------- Update ----------
+  function update(dt){
+    elapsed += dt;
+    timeLeft -= dt;
+
+    // difficulty curve
+    const enemyInterval = clamp(1.8 - elapsed*0.018, 0.65, 1.8);
+    const leakInterval = clamp(4.2 - elapsed*0.03, 2.2, 4.2);
+
+    enemySpawnTimer -= dt;
+    if(enemySpawnTimer <= 0){ spawnEnemy(); enemySpawnTimer = enemyInterval; }
+
+    leakSpawnTimer -= dt;
+    if(leakSpawnTimer <= 0){ spawnLeak(); leakSpawnTimer = leakInterval; }
+
+    // player movement
+    player.moving = false;
+    if(keys.left){ player.x -= player.speed*dt; player.facing = -1; player.moving = true; }
+    if(keys.right){ player.x += player.speed*dt; player.facing = 1; player.moving = true; }
+    player.x = clamp(player.x, 30, W-30);
+    if(player.moving) player.walkPhase += dt*10;
+
+    // shooting
+    shootCooldown -= dt;
+    if(shootHeld && shootCooldown <= 0){
+      fireProjectile();
+      shootCooldown = SHOOT_COOLDOWN_MAX;
+    }
+
+    // projectiles
+    for(const p of projectiles){
+      p.x += p.dir * p.speed * dt;
+      for(const en of enemies){
+        if(!en.alive) continue;
+        if(Math.abs(p.x - en.x) < en.r+p.r && Math.abs(p.y - en.y+18) < 26){
+          en.alive = false;
+          p.dead = true;
+          const amt = rand(45,75);
+          rewardLiters(amt, en.x, en.y-20, 'Ahorrados');
+          break;
+        }
+      }
+      if(p.x < -20 || p.x > W+20) p.dead = true;
+    }
+    projectiles = projectiles.filter(p => !p.dead);
+
+    // enemies
+    for(const en of enemies){
+      if(!en.alive) continue;
+      en.bob += dt*8;
+      en.x += en.dir * en.speed * dt;
+
+      // player intercepts
+      if(Math.abs(en.x - player.x) < 34 && Math.abs(en.y - player.y) < 40){
+        en.alive = false;
+        const amt = rand(40,70);
+        rewardLiters(amt, en.x, en.y-20, 'Ahorrados');
+        continue;
+      }
+
+      // reached tank
+      if(en.x > TANK_LEFT-10 && en.x < TANK_RIGHT+10){
+        en.alive = false;
+        damageTank(rand(6,10));
+        addFloatingText(TANK.x, TANK.top-10, '¡Fuga forzada!', '#ff6b6b');
+      }
+    }
+    enemies = enemies.filter(e => e.alive);
+
+    // leaks drain water continuously
+    for(const lk of leaks){
+      if(!lk.active) continue;
+      lk.drip += dt*6;
+      damageTank(lk.drainRate * dt);
+
+      if(repairPressed && Math.abs(lk.x - player.x) < 45 && Math.abs(lk.y - player.y) < 220){
+        lk.active = false;
+        const amt = rand(90,150);
+        rewardLiters(amt, lk.x, lk.y, 'Salvados');
+      }
+    }
+    leaks = leaks.filter(l => l.active);
+
+    // floating texts
+    for(const ft of floatingTexts){
+      ft.y += ft.vy*dt;
+      ft.life -= dt;
+      ft.alpha = clamp(ft.life/1.1, 0, 1);
+    }
+    floatingTexts = floatingTexts.filter(f => f.life > 0);
+
+    // win/lose checks
+    if(waterPercent <= 0){
+      waterPercent = 0;
+      endGame(false);
+      return;
+    }
+    if(timeLeft <= 0){
+      timeLeft = 0;
+      endGame(waterPercent > 40);
+      return;
+    }
+  }
+
+  // ---------- Draw ----------
+  function drawBackground(){
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#4fb0e8');
+    g.addColorStop(0.6,'#bfe6f7');
+    g.addColorStop(1,'#dff3ff');
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+
+    // mountains silhouette (La Paz altitude vibe)
+    ctx.fillStyle = '#8fa9c2';
+    ctx.beginPath();
+    ctx.moveTo(0,300);
+    ctx.lineTo(90,220); ctx.lineTo(180,300);
+    ctx.lineTo(280,190); ctx.lineTo(380,300);
+    ctx.lineTo(480,230); ctx.lineTo(600,300);
+    ctx.lineTo(700,210); ctx.lineTo(800,300);
+    ctx.lineTo(800,340); ctx.lineTo(0,340);
+    ctx.closePath(); ctx.fill();
+
+    ctx.fillStyle = '#a9c1d8';
+    ctx.beginPath();
+    ctx.moveTo(0,320);
+    ctx.lineTo(120,270); ctx.lineTo(240,320);
+    ctx.lineTo(360,260); ctx.lineTo(500,320);
+    ctx.lineTo(650,270); ctx.lineTo(800,320);
+    ctx.lineTo(800,345); ctx.lineTo(0,345);
+    ctx.closePath(); ctx.fill();
+
+    // little houses (San Pedro barrio)
+    ctx.fillStyle = 'rgba(200,90,60,0.55)';
+    for(let i=0;i<14;i++){
+      const hx = (i*57 + 20) % W;
+      const hy = 350 + (i%3)*8;
+      ctx.fillRect(hx, hy, 26, 20);
+      ctx.fillStyle = 'rgba(180,60,50,0.6)';
+      ctx.beginPath();
+      ctx.moveTo(hx-3,hy); ctx.lineTo(hx+13,hy-10); ctx.lineTo(hx+29,hy);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(200,90,60,0.55)';
+    }
+
+    // ground
+    const groundG = ctx.createLinearGradient(0,GROUND_Y-10,0,H);
+    groundG.addColorStop(0,'#cdbb8f');
+    groundG.addColorStop(1,'#a8946a');
+    ctx.fillStyle = groundG;
+    ctx.fillRect(0,GROUND_Y-6,W,H-(GROUND_Y-6));
+  }
+
+  function drawTank(){
+    const left = TANK_LEFT, right = TANK_RIGHT, top = TANK.top, base = TANK.base;
+    const width = right-left, height = base-top;
+
+    // support frame
+    ctx.fillStyle = '#607d8b';
+    ctx.fillRect(left-8, top-10, 8, height+10);
+    ctx.fillRect(right, top-10, 8, height+10);
+
+    // tank body
+    ctx.fillStyle = '#cfd8dc';
+    roundRect(ctx, left, top, width, height, 12, true, false);
+
+    // water fill
+    const fillH = (waterPercent/100) * (height-12);
+    const waterTop = base - fillH - 6;
+    ctx.save();
+    roundRect(ctx, left+6, top+6, width-12, height-12, 8, false, false, true);
+    ctx.clip();
+    const waterColor = waterPercent > 40 ? '#29b6f6' : (waterPercent > 15 ? '#ffb300' : '#ef5350');
+    const wg = ctx.createLinearGradient(0,waterTop,0,base);
+    wg.addColorStop(0, waterColor);
+    wg.addColorStop(1, '#01579b');
+    ctx.fillStyle = wg;
+    ctx.fillRect(left, waterTop, width, base-waterTop);
+
+    // wave line
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    const waveOffset = performance.now()/300;
+    for(let x=left; x<=right; x+=6){
+      const y = waterTop + Math.sin(x*0.15 + waveOffset)*3;
+      if(x===left) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // tank outline
+    ctx.strokeStyle = '#546e7a';
+    ctx.lineWidth = 4;
+    roundRect(ctx, left, top, width, height, 12, false, true);
+
+    // label
+    ctx.fillStyle = '#37474f';
+    ctx.font = 'bold 13px Trebuchet MS';
+    ctx.textAlign = 'center';
+    ctx.fillText('TANQUE SAN PEDRO', TANK.x, top-16);
+
+    // leak spots (pipes)
+    for(const lk of leaks){
+      drawLeak(lk);
+    }
+  }
+
+  function roundRect(ctx,x,y,w,h,r,fill,stroke,clipOnly){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+    if(clipOnly) return;
+    if(fill) ctx.fill();
+    if(stroke) ctx.stroke();
+  }
+
+  function drawLeak(lk){
+    // pipe
+    ctx.fillStyle = '#78909c';
+    ctx.fillRect(lk.x-8, lk.y-6, 16, 14);
+    ctx.strokeStyle = '#37474f';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(lk.x-8, lk.y-6, 16, 14);
+
+    // dripping water
+    const dripY = lk.y + 10 + (lk.drip%20);
+    ctx.fillStyle = 'rgba(41,182,246,0.85)';
+    ctx.beginPath();
+    ctx.ellipse(lk.x, dripY, 3, 5, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // warning glow
+    ctx.strokeStyle = 'rgba(255,82,82,0.6)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(lk.x, lk.y, 16 + Math.sin(performance.now()/150)*2, 0, Math.PI*2);
+    ctx.stroke();
+  }
+
+  function drawEnemy(en){
+    ctx.save();
+    ctx.translate(en.x, en.y + Math.sin(en.bob)*3);
+    // drop body
+    ctx.fillStyle = '#0288d1';
+    ctx.beginPath();
+    ctx.moveTo(0,-24);
+    ctx.quadraticCurveTo(en.r+2, -4, 0, en.r);
+    ctx.quadraticCurveTo(-en.r-2, -4, 0, -24);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#01579b';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // angry face
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(-6,0,4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(6,0,4,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#212121';
+    ctx.beginPath(); ctx.arc(-5,1,2,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(7,1,2,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#212121';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(0,10,5,0,Math.PI); ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawPlayer(){
+    const bob = player.moving ? Math.sin(player.walkPhase)*3 : 0;
+    ctx.save();
+    ctx.translate(player.x, player.y + bob);
+    const f = player.facing;
+
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.beginPath();
+    ctx.ellipse(0, 2, 18, 6, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // legs
+    ctx.fillStyle = '#2b3a55';
+    const legSwing = player.moving ? Math.sin(player.walkPhase)*8 : 0;
+    ctx.fillRect(-10 + legSwing*0.2, -22, 8, 22);
+    ctx.fillRect(2 - legSwing*0.2, -22, 8, 22);
+
+    // hoodie body
+    ctx.fillStyle = '#e64a19';
+    roundRect(ctx, -15, -46, 30, 28, 6, true, false);
+
+    // hoodie pocket
+    ctx.fillStyle = '#bf360c';
+    ctx.fillRect(-8,-30,16,8);
+
+    // arms
+    ctx.fillStyle = '#e64a19';
+    ctx.fillRect(f>0 ? -19 : 11, -42, 8, 18);
+    ctx.fillRect(f>0 ? 11 : -19, -42, 8, 18);
+
+    // Aqua-Blaster (water gun) in the forward hand
+    ctx.save();
+    const gunX = f>0 ? 17 : -17;
+    ctx.translate(gunX, -34);
+    ctx.fillStyle = '#0288d1';
+    ctx.fillRect(f>0 ? 0 : -14, -4, 14, 8);
+    ctx.fillStyle = '#01579b';
+    ctx.fillRect(f>0 ? 10 : -14, -8, 4, 6);
+    ctx.fillStyle = '#4fc3f7';
+    ctx.fillRect(f>0 ? -2 : -2, 4, 6, 6);
+    ctx.restore();
+
+    // head
+    ctx.fillStyle = '#c98a5e';
+    ctx.beginPath();
+    ctx.arc(0,-54,11,0,Math.PI*2);
+    ctx.fill();
+
+    // cap
+    ctx.fillStyle = '#1565c0';
+    ctx.beginPath();
+    ctx.arc(0,-58,11,Math.PI,0);
+    ctx.fill();
+    ctx.fillRect(f>0 ? -2 : -16, -60, 18, 5);
+
+    // headphones
+    ctx.strokeStyle = '#212121';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0,-58,12,Math.PI*1.15, Math.PI*1.85);
+    ctx.stroke();
+    ctx.fillStyle = '#212121';
+    ctx.beginPath(); ctx.arc(-11,-52,3.5,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(11,-52,3.5,0,Math.PI*2); ctx.fill();
+
+    // eyes / focus look
+    ctx.fillStyle = '#212121';
+    ctx.beginPath(); ctx.arc(f>0?3:-3, -54, 1.6, 0, Math.PI*2); ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawProjectile(p){
+    ctx.save();
+    ctx.translate(p.x, p.y - 18);
+    ctx.fillStyle = '#4fc3f7';
+    ctx.beginPath();
+    ctx.ellipse(0,0, p.r, p.r*1.3, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = '#0277bd';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // trail
+    ctx.fillStyle = 'rgba(79,195,247,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(-p.dir*10, 0, p.r*0.7, p.r*0.9, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawFloatingTexts(){
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 15px Trebuchet MS';
+    for(const ft of floatingTexts){
+      ctx.globalAlpha = ft.alpha;
+      ctx.fillStyle = ft.color;
+      ctx.fillText(ft.text, ft.x, ft.y);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function draw(){
+    drawBackground();
+    drawTank();
+    for(const en of enemies) drawEnemy(en);
+    drawPlayer();
+    for(const p of projectiles) drawProjectile(p);
+    drawFloatingTexts();
+  }
+
+  function updateHUD(){
+    timerBox.textContent = '⏱ ' + Math.ceil(timeLeft);
+    litersBox.textContent = '💧 ' + litersSaved + ' L ahorrados';
+    waterBarInner.style.width = waterPercent + '%';
+    waterPercentText.textContent = Math.round(waterPercent) + '%';
+    waterBarInner.style.background = waterPercent > 40
+      ? 'linear-gradient(#4fc3f7,#0277bd)'
+      : (waterPercent > 15 ? 'linear-gradient(#ffca28,#f57f17)' : 'linear-gradient(#ff8a80,#c62828)');
+  }
+
+  // ---------- Loop ----------
+  function loop(ts){
+    if(state !== 'playing') return;
+    const dt = Math.min((ts-lastTime)/1000, 0.05);
+    lastTime = ts;
+    update(dt);
+    draw();
+    updateHUD();
+    if(state === 'playing') requestAnimationFrame(loop);
+    else { draw(); updateHUD(); }
+  }
+
+  // initial static frame behind start screen
+  drawBackground();
+  drawTank();
+  drawPlayer();
+})();
+</script>
+</body>
+</html>
